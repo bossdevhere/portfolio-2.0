@@ -30,6 +30,7 @@ export const Car: React.FC<CarProps> = ({
   const rotationRef = useRef<number>(0);
   const targetXRef = useRef<number>(0);
   const scrollVelocityRef = useRef<number>(0);
+  const scrollSteerRef = useRef<number>(0);
 
   // Sync external position changes
   useEffect(() => {
@@ -68,22 +69,41 @@ export const Car: React.FC<CarProps> = ({
       keys.current[e.code] = false;
     };
 
+    // Scroll Wheel / Trackpad listener for forward/backward & left/right driving
     const handleWheel = (e: WheelEvent) => {
       if (!hasStarted || hasFinished) return;
-      const clampedDelta = Math.min(100, Math.max(-100, e.deltaY));
-      scrollVelocityRef.current += clampedDelta * 0.8;
+      const clampedDeltaY = Math.min(100, Math.max(-100, e.deltaY));
+      const clampedDeltaX = Math.min(100, Math.max(-100, e.deltaX));
+
+      // Vertical scroll drives forward/backward
+      scrollVelocityRef.current += clampedDeltaY * 0.8;
+
+      // Horizontal scroll (Trackpad two-finger left/right or mouse tilt) steers left/right
+      if (Math.abs(clampedDeltaX) > 1) {
+        scrollSteerRef.current += clampedDeltaX * 0.08;
+      }
     };
 
+    // Touch swipe listener for mobile scrolling (both vertical & horizontal)
     let touchStartY = 0;
+    let touchStartX = 0;
     const handleTouchStart = (e: TouchEvent) => {
       touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
     };
     const handleTouchMove = (e: TouchEvent) => {
       if (!hasStarted || hasFinished) return;
       const touchY = e.touches[0].clientY;
+      const touchX = e.touches[0].clientX;
+
       const deltaY = touchStartY - touchY;
+      const deltaX = touchStartX - touchX;
+
       scrollVelocityRef.current += deltaY * 0.5;
+      scrollSteerRef.current += deltaX * 0.05;
+
       touchStartY = touchY;
+      touchStartX = touchX;
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -108,6 +128,7 @@ export const Car: React.FC<CarProps> = ({
     if (!hasStarted || hasFinished) {
       speedRef.current = 0;
       scrollVelocityRef.current = 0;
+      scrollSteerRef.current = 0;
       onUpdateState(posRef.current, rotationRef.current, 0);
       return;
     }
@@ -117,9 +138,11 @@ export const Car: React.FC<CarProps> = ({
     let currentZ = posRef.current[2];
     let rotation = rotationRef.current;
 
-    // Dampen scroll velocity
+    // Dampen scroll velocity & steering impulse
     const scrollImpulse = scrollVelocityRef.current;
+    const scrollSteerImpulse = scrollSteerRef.current;
     scrollVelocityRef.current = THREE.MathUtils.lerp(scrollVelocityRef.current, 0, delta * 5);
+    scrollSteerRef.current = THREE.MathUtils.lerp(scrollSteerRef.current, 0, delta * 6);
 
     // Acceleration & Controls Logic
     if (isAutoDriving) {
@@ -150,13 +173,17 @@ export const Car: React.FC<CarProps> = ({
         speed = THREE.MathUtils.lerp(speed, 0, delta * (isHandbrake ? 8 : 2));
       }
 
-      // Lateral Lane Steering (X-axis)
+      // Lateral Lane Steering (X-axis) - Keyboard W/S/A/D OR Horizontal Scroll / Touch Swipe
       if (isSteeringLeft) {
         targetXRef.current = Math.max(-5.5, targetXRef.current - delta * 12);
         rotation = THREE.MathUtils.lerp(rotation, 0.15, delta * 8);
       } else if (isSteeringRight) {
         targetXRef.current = Math.min(5.5, targetXRef.current + delta * 12);
         rotation = THREE.MathUtils.lerp(rotation, -0.15, delta * 8);
+      } else if (Math.abs(scrollSteerImpulse) > 0.01) {
+        // Horizontal Scroll / Trackpad left-right steering
+        targetXRef.current = Math.min(5.5, Math.max(-5.5, targetXRef.current + scrollSteerImpulse));
+        rotation = THREE.MathUtils.lerp(rotation, -Math.sign(scrollSteerImpulse) * 0.15, delta * 8);
       } else {
         rotation = THREE.MathUtils.lerp(rotation, 0, delta * 6);
       }
