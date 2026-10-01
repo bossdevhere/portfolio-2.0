@@ -79,7 +79,7 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
           <span className="text-slate-600">|</span>
 
           <span className="text-slate-400">
-            [W/S/A/D] Steer & Drive • [Click HUD] Auto-cruise
+            [Scroll / W/S] Drive Forward & Backward • [A/D] Steer • [Click HUD] Auto-cruise
           </span>
 
           {nextWaypoint && (

@@ -64,8 +64,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         <div className="flex items-center space-x-3 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
           <Compass className="w-5 h-5 text-cyan-400 shrink-0" />
           <div>
-            <span className="text-white font-semibold">Drive Controls:</span>
-            <p className="text-slate-400">Use W/S/A/D or Arrow keys to steer & accelerate manually.</p>
+            <span className="text-white font-semibold font-orbitron">Drive Controls:</span>
+            <p className="text-slate-400">Scroll Down / Up, or use W/S/A/D to drive forward & backward.</p>
           </div>
         </div>
 

@@ -24,6 +24,7 @@ export const Car: React.FC<CarProps> = ({
   const speedRef = useRef<number>(0);
   const rotationRef = useRef<number>(0);
   const targetXRef = useRef<number>(0);
+  const scrollVelocityRef = useRef<number>(0);
 
   // Keyboard control states
   const keys = useRef<{ [key: string]: boolean }>({});
@@ -49,11 +50,37 @@ export const Car: React.FC<CarProps> = ({
       keys.current[e.code] = false;
     };
 
+    // Scroll Wheel / Trackpad listener for forward & backward driving
+    const handleWheel = (e: WheelEvent) => {
+      // deltaY > 0 is scroll down (drive forward), deltaY < 0 is scroll up (reverse)
+      const clampedDelta = Math.min(100, Math.max(-100, e.deltaY));
+      scrollVelocityRef.current += clampedDelta * 0.8;
+    };
+
+    // Touch swipe listener for mobile scrolling
+    let touchStartY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      const deltaY = touchStartY - touchY;
+      scrollVelocityRef.current += deltaY * 0.5;
+      touchStartY = touchY;
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
     };
   }, []);
 
@@ -64,6 +91,10 @@ export const Car: React.FC<CarProps> = ({
     let currentX = posRef.current[0];
     let currentZ = posRef.current[2];
     let rotation = rotationRef.current;
+
+    // Dampen scroll velocity
+    const scrollImpulse = scrollVelocityRef.current;
+    scrollVelocityRef.current = THREE.MathUtils.lerp(scrollVelocityRef.current, 0, delta * 5);
 
     // Acceleration & Controls Logic
     if (isAutoDriving) {
@@ -78,7 +109,7 @@ export const Car: React.FC<CarProps> = ({
       }
       targetXRef.current = THREE.MathUtils.lerp(targetXRef.current, 0, delta * 2);
     } else {
-      // Manual Player Controls (W/S or Up/Down, A/D or Left/Right)
+      // Manual Player Controls (Keyboard W/S or Arrow Keys + Scroll Wheel / Touch Swipe)
       const isAccelerating = keys.current['KeyW'] || keys.current['ArrowUp'];
       const isBraking = keys.current['KeyS'] || keys.current['ArrowDown'];
       const isSteeringLeft = keys.current['KeyA'] || keys.current['ArrowLeft'];
@@ -88,7 +119,11 @@ export const Car: React.FC<CarProps> = ({
       if (isAccelerating) {
         speed = THREE.MathUtils.lerp(speed, -110, delta * 2.5); // Negative Z is forward
       } else if (isBraking) {
-        speed = THREE.MathUtils.lerp(speed, 35, delta * 3); // Reverse
+        speed = THREE.MathUtils.lerp(speed, 40, delta * 3); // Reverse
+      } else if (Math.abs(scrollImpulse) > 0.5) {
+        // Scroll wheel driven speed (Positive deltaY drives forward, negative deltaY drives backward)
+        const targetScrollSpeed = -scrollImpulse * 1.5;
+        speed = THREE.MathUtils.lerp(speed, targetScrollSpeed, delta * 4);
       } else {
         speed = THREE.MathUtils.lerp(speed, 0, delta * (isHandbrake ? 8 : 2));
       }
