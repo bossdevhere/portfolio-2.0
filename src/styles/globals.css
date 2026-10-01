@@ -90,3 +90,21 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #00ff66;
 }
+
+/* Mobile Phone Rotation Keyframe Animation */
+@keyframes phoneRotateKeyframe {
+  0%, 20% {
+    transform: rotate(0deg);
+  }
+  50%, 80% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(-90deg);
+  }
+}
+
+.animate-phone-rotate {
+  animation: phoneRotateKeyframe 3s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+

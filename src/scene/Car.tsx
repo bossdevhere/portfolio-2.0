@@ -12,6 +12,7 @@ interface CarProps {
   audioMuted: boolean;
   hasStarted: boolean;
   hasFinished: boolean;
+  isMobilePortrait?: boolean;
 }
 
 // Configurable Steering & Input Parameters
@@ -31,6 +32,7 @@ export const Car: React.FC<CarProps> = ({
   onUpdateState,
   hasStarted,
   hasFinished,
+  isMobilePortrait = false,
 }) => {
   const carGroupRef = useRef<THREE.Group>(null);
   const wheelsRef = useRef<THREE.Group[]>([]);
@@ -98,7 +100,7 @@ export const Car: React.FC<CarProps> = ({
 
     // FLOATING ANALOG JOYSTICK POINTER HANDLERS
     const handlePointerDown = (e: PointerEvent) => {
-      if (!hasStarted || hasFinished) return;
+      if (!hasStarted || hasFinished || isMobilePortrait) return;
 
       // Ignore interactive HUD elements (buttons, modals, etc.)
       const target = e.target as HTMLElement | null;
@@ -219,8 +221,8 @@ export const Car: React.FC<CarProps> = ({
   useFrame((_, delta) => {
     if (!carGroupRef.current) return;
 
-    // IF GAME HAS NOT STARTED (LAUNCH PAD) OR FINISHED: FREEZE MOVEMENT
-    if (!hasStarted || hasFinished) {
+    // IF GAME HAS NOT STARTED (LAUNCH PAD), FINISHED, OR IN MOBILE PORTRAIT LOCK: FREEZE MOVEMENT
+    if (!hasStarted || hasFinished || isMobilePortrait) {
       speedRef.current = 0;
       scrollVelocityRef.current = 0;
       isJoystickActiveRef.current = false;

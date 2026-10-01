@@ -1,9 +1,11 @@
 import React, { Suspense } from 'react';
 import { useGameState } from './hooks/useGameState';
+import { useMobileOrientation } from './hooks/useMobileOrientation';
 import { World } from './scene/World';
 import { StartScreen } from './components/StartScreen';
 import { LoadingScreen } from './components/LoadingScreen';
 import { PortfolioUI } from './components/PortfolioUI';
+import { MobileOrientationGate } from './components/MobileOrientationGate';
 
 export const App: React.FC = () => {
   const {
@@ -20,8 +22,13 @@ export const App: React.FC = () => {
     playAgain,
   } = useGameState();
 
+  const { isMobilePortrait } = useMobileOrientation();
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#050505]">
+      {/* Mobile Orientation Gate Overlay (ONLY active when isMobile AND isPortrait) */}
+      {isMobilePortrait && <MobileOrientationGate />}
+
       {/* Subtle Vignette Ambient Overlay */}
       <div className="vignette-overlay" />
 
@@ -39,6 +46,7 @@ export const App: React.FC = () => {
           onScorePass={addObstacleScore}
           hasStarted={state.hasStarted}
           hasFinished={state.hasFinished}
+          isMobilePortrait={isMobilePortrait}
           carPosition={state.carPosition}
           carSpeed={state.carSpeed}
           hasCrashed={state.hasCrashed}
@@ -70,3 +78,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+
