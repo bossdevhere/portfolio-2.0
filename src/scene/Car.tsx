@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import { MobileInputState } from '../components/ui/MobileControls';
 
 interface CarProps {
   position: [number, number, number];
@@ -12,14 +13,14 @@ interface CarProps {
   hasStarted: boolean;
   hasFinished: boolean;
   isMobilePortrait?: boolean;
+  mobileInputRef?: React.RefObject<MobileInputState | null>;
 }
 
 // Configurable Steering & Input Parameters
 const STEERING_CONFIG = {
-  SENSITIVITY: 0.008,      // Smooth drag sensitivity for pointer/touch
-  KEYBOARD_SPEED: 7.5,     // Keyboard lane steering speed (units/sec)
-  DEAD_ZONE: 3,            // Minimum pixel delta threshold
-  MAX_STEER_DELTA: 0.35,   // Maximum target X shift per input update (prevents sudden jumps)
+  KEYBOARD_SPEED: 7.5,     // Steering speed (units/sec)
+  DEAD_ZONE: 3,            // Minimum pixel delta threshold for wheel
+  MAX_STEER_DELTA: 0.35,   // Maximum target X shift per input update
   MAX_LANE_X: 5.2,         // Road boundary bounds [-5.2, 5.2]
   DAMPING_FACTOR: 6.0,     // Weight & smooth lerping factor
 };
@@ -32,6 +33,7 @@ export const Car: React.FC<CarProps> = ({
   hasStarted,
   hasFinished,
   isMobilePortrait = false,
+  mobileInputRef,
 }) => {
   const carGroupRef = useRef<THREE.Group>(null);
   const wheelsRef = useRef<THREE.Group[]>([]);
@@ -80,64 +82,7 @@ export const Car: React.FC<CarProps> = ({
       keys.current[e.code] = false;
     };
 
-    // RESTORED TOUCH / POINTER DRAG STEERING SYSTEM
-    let isPointerDown = false;
-    let pointerStartX = 0;
-    let pointerStartY = 0;
-
-    const handlePointerDown = (e: PointerEvent) => {
-      if (!hasStarted || hasFinished || isMobilePortrait) return;
-
-      // Ignore interactive HUD elements (buttons, modals, etc.)
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.closest('button, a, input, select, [role="button"]') ||
-         target.classList.contains('pointer-events-auto'))
-      ) {
-        return;
-      }
-
-      isPointerDown = true;
-      pointerStartX = e.clientX;
-      pointerStartY = e.clientY;
-    };
-
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!isPointerDown || !hasStarted || hasFinished || isMobilePortrait) return;
-
-      const diffX = e.clientX - pointerStartX;
-      const diffY = pointerStartY - e.clientY; // Positive diffY is swipe UP (forward)
-
-      // Apply Dead Zone check to ignore minor jitter
-      if (Math.abs(diffX) >= STEERING_CONFIG.DEAD_ZONE) {
-        // Intuitive Mapping: Swipe/Drag LEFT (diffX < 0) moves car LEFT (decreases X)
-        // Swipe/Drag RIGHT (diffX > 0) moves car RIGHT (increases X)
-        const steerDelta = Math.min(
-          STEERING_CONFIG.MAX_STEER_DELTA,
-          Math.max(-STEERING_CONFIG.MAX_STEER_DELTA, diffX * STEERING_CONFIG.SENSITIVITY)
-        );
-
-        targetXRef.current = Math.min(
-          STEERING_CONFIG.MAX_LANE_X,
-          Math.max(-STEERING_CONFIG.MAX_LANE_X, targetXRef.current + steerDelta)
-        );
-
-        pointerStartX = e.clientX;
-      }
-
-      // Vertical drag drives forward / backward
-      if (Math.abs(diffY) >= STEERING_CONFIG.DEAD_ZONE) {
-        scrollVelocityRef.current += diffY * 0.4;
-        pointerStartY = e.clientY;
-      }
-    };
-
-    const handlePointerUp = () => {
-      isPointerDown = false;
-    };
-
-    // Wheel / Trackpad listener
+    // Wheel / Trackpad listener for desktop
     const handleWheel = (e: WheelEvent) => {
       if (!hasStarted || hasFinished || isMobilePortrait) return;
 
@@ -163,19 +108,11 @@ export const Car: React.FC<CarProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
     window.addEventListener('wheel', handleWheel, { passive: true });
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
       window.removeEventListener('wheel', handleWheel);
     };
   }, [hasStarted, hasFinished, isMobilePortrait]);
@@ -211,11 +148,12 @@ export const Car: React.FC<CarProps> = ({
       }
       targetXRef.current = THREE.MathUtils.lerp(targetXRef.current, 0, delta * 2);
     } else {
-      // Manual Controls: Keyboard (W/S/A/D or Arrows) or Touch/Scroll
-      const isAccelerating = keys.current['KeyW'] || keys.current['ArrowUp'];
-      const isBraking = keys.current['KeyS'] || keys.current['ArrowDown'];
-      const isSteeringLeft = keys.current['KeyA'] || keys.current['ArrowLeft'];
-      const isSteeringRight = keys.current['KeyD'] || keys.current['ArrowRight'];
+      // Unified Input: Keyboard (W/S/A/D or Arrows) OR Mobile D-Pad Buttons
+      const mob = mobileInputRef?.current;
+      const isAccelerating = keys.current['KeyW'] || keys.current['ArrowUp'] || !!mob?.up;
+      const isBraking = keys.current['KeyS'] || keys.current['ArrowDown'] || !!mob?.down;
+      const isSteeringLeft = (keys.current['KeyA'] || keys.current['ArrowLeft'] || !!mob?.left) && !mob?.right;
+      const isSteeringRight = (keys.current['KeyD'] || keys.current['ArrowRight'] || !!mob?.right) && !mob?.left;
       const isHandbrake = keys.current['Space'];
 
       if (isAccelerating) {
@@ -229,7 +167,7 @@ export const Car: React.FC<CarProps> = ({
         speed = THREE.MathUtils.lerp(speed, 0, delta * (isHandbrake ? 8 : 2));
       }
 
-      // Keyboard Lane Steering
+      // Smooth Steering Logic
       if (isSteeringLeft) {
         targetXRef.current = Math.max(
           -STEERING_CONFIG.MAX_LANE_X,

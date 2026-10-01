@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useRef } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { useMobileOrientation } from './hooks/useMobileOrientation';
 import { World } from './scene/World';
@@ -6,6 +6,7 @@ import { StartScreen } from './components/StartScreen';
 import { LoadingScreen } from './components/LoadingScreen';
 import { PortfolioUI } from './components/PortfolioUI';
 import { MobileOrientationGate } from './components/MobileOrientationGate';
+import { MobileInputState } from './components/ui/MobileControls';
 
 export const App: React.FC = () => {
   const {
@@ -22,7 +23,16 @@ export const App: React.FC = () => {
     playAgain,
   } = useGameState();
 
-  const { isMobilePortrait } = useMobileOrientation();
+  const { isMobile, isPortrait, isMobilePortrait } = useMobileOrientation();
+  const showMobileControls = isMobile && !isPortrait;
+
+  // Shared high-performance mutable input ref for mobile D-pad controls
+  const mobileInputRef = useRef<MobileInputState>({
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+  });
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#050505]">
@@ -47,6 +57,7 @@ export const App: React.FC = () => {
           hasStarted={state.hasStarted}
           hasFinished={state.hasFinished}
           isMobilePortrait={isMobilePortrait}
+          mobileInputRef={mobileInputRef}
           carPosition={state.carPosition}
           carSpeed={state.carSpeed}
           hasCrashed={state.hasCrashed}
@@ -71,6 +82,8 @@ export const App: React.FC = () => {
           onSetCameraMode={setCameraMode}
           onRestartTrack={playAgain}
           onPlayAgain={playAgain}
+          mobileInputRef={mobileInputRef}
+          showMobileControls={showMobileControls}
         />
       )}
     </div>
@@ -78,4 +91,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-

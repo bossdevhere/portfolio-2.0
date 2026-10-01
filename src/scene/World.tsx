@@ -9,6 +9,7 @@ import { CameraController } from './CameraController';
 import { Obstacles } from './Obstacles';
 import { RoadsidePortfolioSigns } from './RoadsidePortfolioSigns';
 import { SectionId } from '../types';
+import { MobileInputState } from '../components/ui/MobileControls';
 
 interface WorldProps {
   currentSection: SectionId;
@@ -23,6 +24,7 @@ interface WorldProps {
   hasStarted: boolean;
   hasFinished: boolean;
   isMobilePortrait?: boolean;
+  mobileInputRef?: React.RefObject<MobileInputState | null>;
   carPosition: [number, number, number];
   carSpeed: number;
   hasCrashed: boolean;
@@ -41,6 +43,7 @@ export const World: React.FC<WorldProps> = ({
   hasStarted,
   hasFinished,
   isMobilePortrait = false,
+  mobileInputRef,
   carPosition,
   carSpeed,
   hasCrashed,
@@ -77,6 +80,7 @@ export const World: React.FC<WorldProps> = ({
               hasStarted={hasStarted}
               hasFinished={hasFinished}
               isMobilePortrait={isMobilePortrait}
+              mobileInputRef={mobileInputRef}
             />
             <Obstacles
               playerPos={carPosition}

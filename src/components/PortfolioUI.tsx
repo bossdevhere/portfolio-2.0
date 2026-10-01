@@ -3,6 +3,7 @@ import { GameState, SectionId } from '../types';
 import { SectionTransitionBanner } from './ui/SectionTransitionBanner';
 import { LeaderboardModal } from './ui/LeaderboardModal';
 import { FinishModal } from './ui/FinishModal';
+import { MobileControls, MobileInputState } from './ui/MobileControls';
 import { Volume2, VolumeX, Trophy } from 'lucide-react';
 import { SECTION_WAYPOINTS } from '../data/portfolio';
 import gsap from 'gsap';
@@ -16,6 +17,8 @@ interface PortfolioUIProps {
   onSetCameraMode: (mode: 'third-person' | 'hood' | 'top-down') => void;
   onRestartTrack: () => void;
   onPlayAgain: () => void;
+  mobileInputRef?: React.RefObject<MobileInputState | null>;
+  showMobileControls?: boolean;
 }
 
 export const PortfolioUI: React.FC<PortfolioUIProps> = ({
@@ -25,6 +28,8 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
   onCloseModal,
   onToggleAudio,
   onPlayAgain,
+  mobileInputRef,
+  showMobileControls = false,
 }) => {
   const currentWaypointIndex = SECTION_WAYPOINTS.findIndex(w => w.id === state.currentSection);
   const currentWaypoint = SECTION_WAYPOINTS[currentWaypointIndex] || SECTION_WAYPOINTS[0];
@@ -175,6 +180,14 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
           </div>
         </div>
       </div>
+
+      {/* On-Screen Mobile D-Pad Button Controls (Rendered ONLY in Mobile Landscape) */}
+      {showMobileControls && mobileInputRef && (
+        <MobileControls
+          mobileInputRef={mobileInputRef}
+          isGameActive={state.hasStarted && !state.hasFinished && !state.hasCrashed}
+        />
+      )}
 
       {/* Cinematic Section Intro Transition */}
       <SectionTransitionBanner
