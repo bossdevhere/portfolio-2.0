@@ -246,7 +246,6 @@ export function useGameState() {
       return {
         ...prev,
         isPaused: nextPaused,
-        carSpeed: nextPaused ? 0 : prev.carSpeed,
       };
     });
   }, []);

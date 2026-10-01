@@ -84,6 +84,7 @@ export const App: React.FC = () => {
           onScorePass={addObstacleScore}
           hasStarted={state.hasStarted}
           hasFinished={state.hasFinished}
+          isPaused={state.isPaused}
           isMobilePortrait={isMobilePortrait}
           mobileInputRef={mobileInputRef}
           carPosition={state.carPosition}

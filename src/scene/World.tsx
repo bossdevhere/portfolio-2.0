@@ -23,6 +23,7 @@ interface WorldProps {
   onScorePass: (points: number, label: string) => void;
   hasStarted: boolean;
   hasFinished: boolean;
+  isPaused?: boolean;
   isMobilePortrait?: boolean;
   mobileInputRef?: React.RefObject<MobileInputState | null>;
   carPosition: [number, number, number];
@@ -42,6 +43,7 @@ export const World: React.FC<WorldProps> = ({
   onScorePass,
   hasStarted,
   hasFinished,
+  isPaused = false,
   isMobilePortrait = false,
   mobileInputRef,
   carPosition,
@@ -79,6 +81,7 @@ export const World: React.FC<WorldProps> = ({
               audioMuted={audioMuted}
               hasStarted={hasStarted}
               hasFinished={hasFinished}
+              isPaused={isPaused}
               isMobilePortrait={isMobilePortrait}
               mobileInputRef={mobileInputRef}
             />
@@ -87,7 +90,7 @@ export const World: React.FC<WorldProps> = ({
               carSpeed={carSpeed}
               onCollision={onCollision}
               onScorePass={onScorePass}
-              isGameActive={hasStarted && !hasFinished && !isMobilePortrait}
+              isGameActive={hasStarted && !hasFinished && !isMobilePortrait && !isPaused}
               hasCrashed={hasCrashed}
             />
             <CameraController

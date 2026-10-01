@@ -12,6 +12,7 @@ interface CarProps {
   audioMuted: boolean;
   hasStarted: boolean;
   hasFinished: boolean;
+  isPaused?: boolean;
   isMobilePortrait?: boolean;
   mobileInputRef?: React.RefObject<MobileInputState | null>;
 }
@@ -32,6 +33,7 @@ export const Car: React.FC<CarProps> = ({
   onUpdateState,
   hasStarted,
   hasFinished,
+  isPaused = false,
   isMobilePortrait = false,
   mobileInputRef,
 }) => {
@@ -86,7 +88,7 @@ export const Car: React.FC<CarProps> = ({
 
     // Wheel / Trackpad listener for desktop
     const handleWheel = (e: WheelEvent) => {
-      if (!hasStarted || hasFinished || isMobilePortrait) return;
+      if (!hasStarted || hasFinished || isMobilePortrait || isPaused) return;
 
       const clampedDeltaY = Math.min(100, Math.max(-100, e.deltaY));
       const clampedDeltaX = Math.min(100, Math.max(-100, e.deltaX));
@@ -117,7 +119,7 @@ export const Car: React.FC<CarProps> = ({
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [hasStarted, hasFinished, isMobilePortrait]);
+  }, [hasStarted, hasFinished, isMobilePortrait, isPaused]);
 
   useFrame((_, delta) => {
     if (!carGroupRef.current) return;
@@ -128,6 +130,12 @@ export const Car: React.FC<CarProps> = ({
       scrollVelocityRef.current = 0;
       keys.current = {};
       onUpdateState(posRef.current, rotationRef.current, 0);
+      return;
+    }
+
+    if (isPaused) {
+      keys.current = {};
+      scrollVelocityRef.current = 0;
       return;
     }
 
