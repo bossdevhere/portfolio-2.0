@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
-import { SectionId, GameState, ScoreEntry } from '../types';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { SectionId, GameState, ScoreEntry, ScorePopup } from '../types';
 import { SECTION_WAYPOINTS } from '../data/portfolio';
+import { SCORING_CONFIG } from '../config/scoring';
 
 const INITIAL_LEADERBOARD: ScoreEntry[] = [
   { name: 'CyberRacer', score: 2850, date: '2026-09-28' },
@@ -32,8 +33,51 @@ export function useGameState() {
       hasCrashed: false,
       hasFinished: false,
       leaderboard: savedLeaderboard,
+      scorePopups: [],
     };
   });
+
+  // Track passive driving timer
+  const lastPassiveScoreTimeRef = useRef<number>(Date.now());
+
+  // Passive Driving Score: +1 point every 1 second when actively driving
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Date.now();
+      if (
+        state.hasStarted &&
+        state.carSpeed > 5 &&
+        !state.hasCrashed &&
+        !state.hasFinished &&
+        !state.activeModal
+      ) {
+        if (now - lastPassiveScoreTimeRef.current >= SCORING_CONFIG.PASSIVE_SCORE_INTERVAL_MS) {
+          lastPassiveScoreTimeRef.current = now;
+
+          if (SCORING_CONFIG.DEBUG_SCORING) {
+            console.log('[Scoring] Passive driving -> +1 point');
+          }
+
+          setState((prev) => {
+            const nextScore = prev.score + 1;
+            const nextHighScore = Math.max(prev.highScore, nextScore);
+            if (nextHighScore > prev.highScore) {
+              localStorage.setItem('cyberdrive_highscore', nextHighScore.toString());
+            }
+            return {
+              ...prev,
+              score: nextScore,
+              highScore: nextHighScore,
+            };
+          });
+        }
+      } else {
+        lastPassiveScoreTimeRef.current = now;
+      }
+    }, 200);
+
+    return () => clearInterval(timer);
+  }, [state.hasStarted, state.carSpeed, state.hasCrashed, state.hasFinished, state.activeModal]);
 
   const startExperience = useCallback(() => {
     setState((prev) => ({
@@ -73,18 +117,8 @@ export function useGameState() {
         }
       }
 
-      // Live Score Calculation based on distance traveled forward
-      const distanceScore = Math.max(0, Math.round(Math.abs(currentZ) * 4));
-      const newScore = Math.max(prev.score, distanceScore);
-
       // Check if player reached FINISH LINE (Z <= -535)
       const isFinish = currentZ <= -535 && !prev.hasFinished;
-
-      // Update High Score
-      const newHighScore = Math.max(prev.highScore, newScore);
-      if (newHighScore > prev.highScore) {
-        localStorage.setItem('cyberdrive_highscore', newHighScore.toString());
-      }
 
       const targetDist = Math.abs(prev.targetZPosition - currentZ);
       const isStillAutoDriving = prev.isAutoDriving && targetDist > 2;
@@ -96,18 +130,47 @@ export function useGameState() {
         carSpeed: speed,
         currentSection: closestSection,
         isAutoDriving: isStillAutoDriving,
-        score: newScore,
-        highScore: newHighScore,
         hasFinished: prev.hasFinished || isFinish,
       };
     });
+  }, []);
+
+  // Award points when an obstacle is passed
+  const addObstacleScore = useCallback((points: number, label: string) => {
+    const popupId = Date.now() + Math.random();
+
+    setState((prev) => {
+      const nextScore = prev.score + points;
+      const nextHighScore = Math.max(prev.highScore, nextScore);
+      if (nextHighScore > prev.highScore) {
+        localStorage.setItem('cyberdrive_highscore', nextHighScore.toString());
+      }
+
+      const newPopup: ScorePopup = { id: popupId, label, points };
+      const updatedPopups = [...prev.scorePopups, newPopup];
+
+      return {
+        ...prev,
+        score: nextScore,
+        highScore: nextHighScore,
+        scorePopups: updatedPopups,
+      };
+    });
+
+    // Auto-remove floating popup after 1200ms
+    setTimeout(() => {
+      setState((prev) => ({
+        ...prev,
+        scorePopups: prev.scorePopups.filter((p) => p.id !== popupId),
+      }));
+    }, 1200);
   }, []);
 
   // Collision handler: Teleport back to nearest checkpoint
   const handleCollision = useCallback(() => {
     setState((prev) => {
       const currentZ = prev.carPosition[2];
-      
+
       // Find nearest previous checkpoint behind current position
       let respawnWaypoint = SECTION_WAYPOINTS[0]; // Default to Launching Pad
       for (const w of SECTION_WAYPOINTS) {
@@ -123,11 +186,10 @@ export function useGameState() {
         targetZPosition: respawnWaypoint.zPosition,
         isAutoDriving: false,
         carSpeed: 0,
-        score: Math.max(0, prev.score - 100), // Minor penalty
+        scorePopups: [], // Clear score popups on crash
       };
     });
 
-    // Reset crash flash state after 800ms
     setTimeout(() => {
       setState((prev) => ({ ...prev, hasCrashed: false }));
     }, 800);
@@ -166,7 +228,6 @@ export function useGameState() {
   // Play Again / Reset Game to Launching Pad
   const playAgain = useCallback(() => {
     setState((prev) => {
-      // Record score into leaderboard
       const newEntry: ScoreEntry = {
         name: 'Player 1',
         score: prev.score,
@@ -190,6 +251,7 @@ export function useGameState() {
         hasFinished: false,
         score: 0,
         leaderboard: updatedLeaderboard,
+        scorePopups: [],
       };
     });
   }, []);
@@ -199,6 +261,7 @@ export function useGameState() {
     startExperience,
     navigateToSection,
     updateCarState,
+    addObstacleScore,
     handleCollision,
     openModal,
     closeModal,

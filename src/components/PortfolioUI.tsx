@@ -45,7 +45,7 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
       {/* Collision Red Flash Overlay */}
       {state.hasCrashed && (
         <div className="fixed inset-0 z-50 bg-red-600/30 backdrop-blur-sm flex items-center justify-center animate-ping">
-          <div className="p-4 bg-red-950 border border-red-500 rounded-2xl flex items-center space-x-2 text-white font-orbitron font-bold">
+          <div className="p-4 bg-red-950 border border-red-500 rounded-2xl flex items-center space-x-2 text-white font-orbitron font-bold shadow-2xl">
             <AlertTriangle className="w-6 h-6 text-red-400" />
             <span>CRASH! RESPAWNING TO CHECKPOINT...</span>
           </div>
@@ -61,6 +61,24 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
 
       {/* Top Right Controls & Score Badge */}
       <div className="absolute top-4 right-4 pointer-events-auto flex items-center space-x-3">
+        {/* Floating Score Feedback Popups */}
+        <div className="flex flex-col items-end space-y-1 pointer-events-none mr-2">
+          {state.scorePopups.map((popup) => (
+            <div
+              key={popup.id}
+              className={`px-3 py-1 rounded-xl text-xs font-mono font-bold shadow-lg animate-bounce transition-all ${
+                popup.points >= 10
+                  ? 'bg-gradient-to-r from-amber-500 to-red-500 text-slate-950 border border-amber-300 shadow-amber-500/50 text-sm'
+                  : popup.points >= 5
+                  ? 'bg-cyan-500 text-slate-950 border border-cyan-300 shadow-cyan-500/50'
+                  : 'bg-emerald-500 text-slate-950 border border-emerald-300'
+              }`}
+            >
+              {popup.label}
+            </div>
+          ))}
+        </div>
+
         {/* Live Score Counter */}
         <div className="glass-panel px-4 py-2 rounded-xl border border-amber-500/30 flex items-center space-x-3">
           <Flame className="w-5 h-5 text-amber-400 animate-pulse" />

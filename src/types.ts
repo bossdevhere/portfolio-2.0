@@ -53,20 +53,16 @@ export interface SkillCategory {
   skills: { name: string; level: number; icon?: string }[];
 }
 
-export interface ObstacleData {
-  id: string;
-  type: 'car' | 'truck';
-  x: number;
-  z: number;
-  speed: number; // movement speed along Z
-  lane: number;
-  color: string;
-}
-
 export interface ScoreEntry {
   name: string;
   score: number;
   date: string;
+}
+
+export interface ScorePopup {
+  id: number;
+  label: string;
+  points: number;
 }
 
 export interface GameState {
@@ -85,4 +81,5 @@ export interface GameState {
   hasCrashed: boolean;
   hasFinished: boolean;
   leaderboard: ScoreEntry[];
+  scorePopups: ScorePopup[];
 }

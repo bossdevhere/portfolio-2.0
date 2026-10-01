@@ -11,6 +11,7 @@ export const App: React.FC = () => {
     startExperience,
     navigateToSection,
     updateCarState,
+    addObstacleScore,
     handleCollision,
     openModal,
     closeModal,
@@ -35,8 +36,11 @@ export const App: React.FC = () => {
           audioMuted={state.audioMuted}
           cameraMode={state.cameraMode}
           onCollision={handleCollision}
+          onScorePass={addObstacleScore}
           hasStarted={state.hasStarted}
           carPosition={state.carPosition}
+          carSpeed={state.carSpeed}
+          hasCrashed={state.hasCrashed}
         />
       </Suspense>
 

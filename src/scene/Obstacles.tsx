@@ -1,11 +1,15 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { SCORING_CONFIG } from '../config/scoring';
 
 interface ObstaclesProps {
   playerPos: [number, number, number];
+  carSpeed: number;
   onCollision: () => void;
+  onScorePass: (points: number, typeText: string) => void;
   isGameActive: boolean;
+  hasCrashed: boolean;
 }
 
 interface TrafficVehicle {
@@ -18,9 +22,17 @@ interface TrafficVehicle {
   width: number;
   height: number;
   length: number;
+  hasBeenScored: boolean;
 }
 
-export const Obstacles: React.FC<ObstaclesProps> = ({ playerPos, onCollision, isGameActive }) => {
+export const Obstacles: React.FC<ObstaclesProps> = ({
+  playerPos,
+  carSpeed,
+  onCollision,
+  onScorePass,
+  isGameActive,
+  hasCrashed,
+}) => {
   const groupRef = useRef<THREE.Group>(null);
   const vehiclesRef = useRef<THREE.Group[]>([]);
   const lastCollisionTime = useRef<number>(0);
@@ -47,6 +59,7 @@ export const Obstacles: React.FC<ObstaclesProps> = ({ playerPos, onCollision, is
         width: isTruck ? 2.4 : 1.8,
         height: isTruck ? 2.2 : 1.1,
         length: isTruck ? 5.5 : 3.6,
+        hasBeenScored: false,
       });
     }
     return list;
@@ -58,33 +71,67 @@ export const Obstacles: React.FC<ObstaclesProps> = ({ playerPos, onCollision, is
     const [px, py, pz] = playerPos;
     const now = performance.now();
 
-    // Move traffic vehicles along the track
     trafficVehicles.forEach((veh, idx) => {
       const meshGroup = vehiclesRef.current[idx];
       if (!meshGroup) return;
 
-      // Move obstacle forward or backward
+      // Move obstacle forward along Z
       veh.z += veh.speed * delta * 0.4;
       if (veh.z > 15) {
         veh.z = -560; // Loop back to start of track
+        veh.hasBeenScored = false; // Reset scored flag for new pass
       }
 
       meshGroup.position.set(veh.x, veh.height / 2, veh.z);
 
-      // Bounding Box Collision Detection
+      // 1. COLLISION DETECTION
       const dx = Math.abs(px - veh.x);
       const dz = Math.abs(pz - veh.z);
 
-      // Hitbox thresholds
       const hitWidth = (1.9 + veh.width) * 0.45;
       const hitLength = (4.2 + veh.length) * 0.42;
 
       if (dx < hitWidth && dz < hitLength) {
-        // Cooldown of 1.5s between collision triggers
         if (now - lastCollisionTime.current > 1500) {
           lastCollisionTime.current = now;
+          veh.hasBeenScored = true; // Prevent pass score if crashed
           onCollision();
         }
+        return;
+      }
+
+      // 2. OBSTACLE PASS SCORING LOGIC
+      // Check if player's car has completely passed the obstacle (z position of obstacle is now behind player)
+      if (!veh.hasBeenScored && !hasCrashed && veh.z > pz + 2.5) {
+        veh.hasBeenScored = true;
+
+        const isClosePass = dx <= SCORING_CONFIG.CLOSE_PASS_DISTANCE;
+        const isHighSpeed = carSpeed > SCORING_CONFIG.HIGH_SPEED_THRESHOLD;
+
+        let points = 2;
+        let label = '+2';
+
+        if (isClosePass && isHighSpeed) {
+          points = 10;
+          label = '+10 🔥';
+          if (SCORING_CONFIG.DEBUG_SCORING) {
+            console.log(`[Scoring] High-speed close pass! +10 (speed: ${carSpeed} km/h, dist: ${dx.toFixed(2)})`);
+          }
+        } else if (isClosePass) {
+          points = 5;
+          label = '+5';
+          if (SCORING_CONFIG.DEBUG_SCORING) {
+            console.log(`[Scoring] Close pass! +5 (dist: ${dx.toFixed(2)})`);
+          }
+        } else {
+          points = 2;
+          label = '+2';
+          if (SCORING_CONFIG.DEBUG_SCORING) {
+            console.log(`[Scoring] Normal obstacle pass! +2`);
+          }
+        }
+
+        onScorePass(points, label);
       }
     });
   });
@@ -102,17 +149,14 @@ export const Obstacles: React.FC<ObstaclesProps> = ({ playerPos, onCollision, is
           {veh.type === 'truck' ? (
             /* Cyber Cargo Truck */
             <group>
-              {/* Truck Container Cab */}
               <mesh position={[0, 0, 0]}>
                 <boxGeometry args={[veh.width, veh.height, veh.length]} />
                 <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
               </mesh>
-              {/* Neon Accent Strip */}
               <mesh position={[0, 0.4, 0]}>
                 <boxGeometry args={[veh.width + 0.05, 0.2, veh.length + 0.05]} />
                 <meshBasicMaterial color={veh.color} />
               </mesh>
-              {/* Red Tail Warning Lights */}
               <mesh position={[0, 0, veh.length / 2 + 0.05]}>
                 <boxGeometry args={[veh.width * 0.8, 0.3, 0.1]} />
                 <meshBasicMaterial color="#ff0044" />
