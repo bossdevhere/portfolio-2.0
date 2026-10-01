@@ -108,3 +108,68 @@
   animation: phoneRotateKeyframe 3s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
 }
 
+/* Mobile Landscape Landing Screen Compact Viewport Sizing */
+@media (orientation: landscape) and (max-height: 550px) {
+  .start-screen-container {
+    padding: 0.65rem 1.25rem !important;
+  }
+
+  .start-screen-header {
+    padding-bottom: 0.35rem !important;
+  }
+
+  .start-screen-header button {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.65rem !important;
+  }
+
+  .start-screen-main {
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+    row-gap: 0.4rem !important;
+  }
+
+  .start-screen-title-group {
+    row-gap: 0.2rem !important;
+  }
+
+  .start-screen-title {
+    font-size: 1.4rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .start-screen-subtitle {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  .start-screen-divider {
+    width: 2.5rem !important;
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .start-screen-button-wrapper {
+    padding-top: 0.2rem !important;
+  }
+
+  .start-screen-button {
+    padding: 0.35rem 1.25rem !important;
+    font-size: 0.75rem !important;
+    border-width: 1.5px !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .start-screen-button svg {
+    width: 0.85rem !important;
+    height: 0.85rem !important;
+  }
+
+  .start-screen-legend {
+    padding-top: 0.35rem !important;
+    font-size: 0.6rem !important;
+    gap: 0.25rem 1rem !important;
+  }
+}
+
+
