@@ -99,7 +99,7 @@ export function useGameState() {
       currentSection: sectionId,
       targetZPosition: waypoint.zPosition,
       isAutoDriving: true,
-      activeModal: null,
+      activeModal: sectionId === 'start' || sectionId === 'finish' ? null : sectionId,
     }));
   }, []);
 
@@ -108,12 +108,19 @@ export function useGameState() {
       const currentZ = position[2];
       let closestSection = prev.currentSection;
       let minDistance = Infinity;
+      let activeNearCheckpoint: SectionId | null = null;
 
+      // Distance-based Checkpoint Content triggering
       for (const w of SECTION_WAYPOINTS) {
         const dist = Math.abs(w.zPosition - currentZ);
         if (dist < minDistance) {
           minDistance = dist;
           closestSection = w.id;
+        }
+
+        // If car is within 10 meters of a checkpoint, make its content visible!
+        if (dist <= 10 && w.id !== 'start' && w.id !== 'finish') {
+          activeNearCheckpoint = w.id;
         }
       }
 
@@ -123,6 +130,11 @@ export function useGameState() {
       const targetDist = Math.abs(prev.targetZPosition - currentZ);
       const isStillAutoDriving = prev.isAutoDriving && targetDist > 2;
 
+      // Retain activeModal if manually opened via click or if car is currently at a checkpoint
+      const newActiveModal = prev.activeModal === 'leaderboard'
+        ? 'leaderboard'
+        : (activeNearCheckpoint || (prev.isAutoDriving ? prev.activeModal : null));
+
       return {
         ...prev,
         carPosition: position,
@@ -131,6 +143,7 @@ export function useGameState() {
         currentSection: closestSection,
         isAutoDriving: isStillAutoDriving,
         hasFinished: prev.hasFinished || isFinish,
+        activeModal: newActiveModal,
       };
     });
   }, []);
@@ -157,7 +170,6 @@ export function useGameState() {
       };
     });
 
-    // Auto-remove floating popup after 1200ms
     setTimeout(() => {
       setState((prev) => ({
         ...prev,
@@ -166,13 +178,12 @@ export function useGameState() {
     }, 1200);
   }, []);
 
-  // Collision handler: Teleport back to nearest checkpoint
+  // Collision handler
   const handleCollision = useCallback(() => {
     setState((prev) => {
       const currentZ = prev.carPosition[2];
 
-      // Find nearest previous checkpoint behind current position
-      let respawnWaypoint = SECTION_WAYPOINTS[0]; // Default to Launching Pad
+      let respawnWaypoint = SECTION_WAYPOINTS[0];
       for (const w of SECTION_WAYPOINTS) {
         if (w.zPosition > currentZ + 5) {
           respawnWaypoint = w;
@@ -186,7 +197,8 @@ export function useGameState() {
         targetZPosition: respawnWaypoint.zPosition,
         isAutoDriving: false,
         carSpeed: 0,
-        scorePopups: [], // Clear score popups on crash
+        scorePopups: [],
+        activeModal: null,
       };
     });
 
@@ -225,7 +237,7 @@ export function useGameState() {
     }));
   }, []);
 
-  // Play Again / Reset Game to Launching Pad
+  // Play Again / Reset Game
   const playAgain = useCallback(() => {
     setState((prev) => {
       const newEntry: ScoreEntry = {
