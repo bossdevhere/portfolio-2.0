@@ -157,14 +157,35 @@ export const Car: React.FC<CarProps> = ({
       const isHandbrake = keys.current['Space'];
 
       if (isAccelerating) {
-        speed = THREE.MathUtils.lerp(speed, -110, delta * 2.5);
+        // Traffic Rider progressive acceleration curve (smooth initial launch, building power)
+        let currentAbsSpeed = Math.abs(speed);
+        // Start gentle (32 km/h/s) and build power as momentum grows (up to 80 km/h/s at top speed)
+        const accelRate = 32 + (currentAbsSpeed / 115) * 48;
+        currentAbsSpeed = Math.min(115, currentAbsSpeed + accelRate * delta);
+        speed = -currentAbsSpeed;
       } else if (isBraking) {
-        speed = THREE.MathUtils.lerp(speed, 40, delta * 3);
+        if (speed < 0) {
+          // Responsive braking while driving forward
+          let currentAbsSpeed = Math.abs(speed);
+          currentAbsSpeed = Math.max(0, currentAbsSpeed - 120 * delta);
+          speed = -currentAbsSpeed;
+        } else {
+          // Reversing at low speed
+          speed = Math.min(35, speed + 45 * delta);
+        }
       } else if (Math.abs(scrollImpulse) > 0.5) {
         const targetScrollSpeed = -scrollImpulse * 1.5;
         speed = THREE.MathUtils.lerp(speed, targetScrollSpeed, delta * 4);
       } else {
-        speed = THREE.MathUtils.lerp(speed, 0, delta * (isHandbrake ? 8 : 2));
+        // Natural coasting deceleration when accelerator is released
+        if (speed < 0) {
+          let currentAbsSpeed = Math.abs(speed);
+          const decelRate = isHandbrake ? 180 : 35; // Handbrake vs Coasting
+          currentAbsSpeed = Math.max(0, currentAbsSpeed - decelRate * delta);
+          speed = -currentAbsSpeed;
+        } else if (speed > 0) {
+          speed = Math.max(0, speed - 65 * delta);
+        }
       }
 
       // Smooth Steering Logic
