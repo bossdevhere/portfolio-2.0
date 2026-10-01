@@ -20,6 +20,7 @@ interface WorldProps {
   onCollision: () => void;
   onScorePass: (points: number, label: string) => void;
   hasStarted: boolean;
+  hasFinished: boolean;
   carPosition: [number, number, number];
   carSpeed: number;
   hasCrashed: boolean;
@@ -36,6 +37,7 @@ export const World: React.FC<WorldProps> = ({
   onCollision,
   onScorePass,
   hasStarted,
+  hasFinished,
   carPosition,
   carSpeed,
   hasCrashed,
@@ -65,13 +67,15 @@ export const World: React.FC<WorldProps> = ({
               isAutoDriving={isAutoDriving}
               onUpdateState={onUpdateCarState}
               audioMuted={audioMuted}
+              hasStarted={hasStarted}
+              hasFinished={hasFinished}
             />
             <Obstacles
               playerPos={carPosition}
               carSpeed={carSpeed}
               onCollision={onCollision}
               onScorePass={onScorePass}
-              isGameActive={hasStarted}
+              isGameActive={hasStarted && !hasFinished}
               hasCrashed={hasCrashed}
             />
             <CameraController
@@ -79,6 +83,7 @@ export const World: React.FC<WorldProps> = ({
               carRotation={0}
               carSpeed={carSpeed}
               cameraMode={cameraMode}
+              hasCrashed={hasCrashed}
             />
           </Suspense>
         </Bvh>

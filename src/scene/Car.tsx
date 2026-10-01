@@ -9,6 +9,8 @@ interface CarProps {
   isAutoDriving: boolean;
   onUpdateState: (pos: [number, number, number], rotation: number, speed: number) => void;
   audioMuted: boolean;
+  hasStarted: boolean;
+  hasFinished: boolean;
 }
 
 export const Car: React.FC<CarProps> = ({
@@ -16,6 +18,8 @@ export const Car: React.FC<CarProps> = ({
   targetZ,
   isAutoDriving,
   onUpdateState,
+  hasStarted,
+  hasFinished,
 }) => {
   const carGroupRef = useRef<THREE.Group>(null);
   const wheelsRef = useRef<THREE.Group[]>([]);
@@ -27,9 +31,8 @@ export const Car: React.FC<CarProps> = ({
   const targetXRef = useRef<number>(0);
   const scrollVelocityRef = useRef<number>(0);
 
-  // Sync external position changes (e.g. Teleport on collision or game reset)
+  // Sync external position changes
   useEffect(() => {
-    // If distance between posRef and incoming position is large, teleport
     const distZ = Math.abs(posRef.current[2] - position[2]);
     if (distZ > 5) {
       posRef.current = [...position];
@@ -54,7 +57,7 @@ export const Car: React.FC<CarProps> = ({
       customCarModel = gltf.scene;
     }
   } catch {
-    // Fallback to procedural high-tech cyber car if no file exists yet
+    // Fallback to procedural high-tech cyber car
   }
 
   useEffect(() => {
@@ -65,18 +68,18 @@ export const Car: React.FC<CarProps> = ({
       keys.current[e.code] = false;
     };
 
-    // Scroll Wheel / Trackpad listener for forward & backward driving
     const handleWheel = (e: WheelEvent) => {
+      if (!hasStarted || hasFinished) return;
       const clampedDelta = Math.min(100, Math.max(-100, e.deltaY));
       scrollVelocityRef.current += clampedDelta * 0.8;
     };
 
-    // Touch swipe listener for mobile scrolling
     let touchStartY = 0;
     const handleTouchStart = (e: TouchEvent) => {
       touchStartY = e.touches[0].clientY;
     };
     const handleTouchMove = (e: TouchEvent) => {
+      if (!hasStarted || hasFinished) return;
       const touchY = e.touches[0].clientY;
       const deltaY = touchStartY - touchY;
       scrollVelocityRef.current += deltaY * 0.5;
@@ -96,10 +99,18 @@ export const Car: React.FC<CarProps> = ({
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, []);
+  }, [hasStarted, hasFinished]);
 
   useFrame((_, delta) => {
     if (!carGroupRef.current) return;
+
+    // IF GAME HAS NOT STARTED (LAUNCH PAD) OR FINISHED: FREEZE MOVEMENT
+    if (!hasStarted || hasFinished) {
+      speedRef.current = 0;
+      scrollVelocityRef.current = 0;
+      onUpdateState(posRef.current, rotationRef.current, 0);
+      return;
+    }
 
     let speed = speedRef.current;
     let currentX = posRef.current[0];
@@ -112,10 +123,8 @@ export const Car: React.FC<CarProps> = ({
 
     // Acceleration & Controls Logic
     if (isAutoDriving) {
-      // Smooth auto cruise control towards targetZ
       const distToTarget = targetZ - currentZ;
       if (Math.abs(distToTarget) > 1) {
-        // Drive towards negative Z
         const direction = Math.sign(distToTarget);
         speed = THREE.MathUtils.lerp(speed, direction * 75, delta * 3);
       } else {
@@ -131,9 +140,9 @@ export const Car: React.FC<CarProps> = ({
       const isHandbrake = keys.current['Space'];
 
       if (isAccelerating) {
-        speed = THREE.MathUtils.lerp(speed, -110, delta * 2.5); // Negative Z is forward
+        speed = THREE.MathUtils.lerp(speed, -110, delta * 2.5);
       } else if (isBraking) {
-        speed = THREE.MathUtils.lerp(speed, 40, delta * 3); // Reverse
+        speed = THREE.MathUtils.lerp(speed, 40, delta * 3);
       } else if (Math.abs(scrollImpulse) > 0.5) {
         const targetScrollSpeed = -scrollImpulse * 1.5;
         speed = THREE.MathUtils.lerp(speed, targetScrollSpeed, delta * 4);
@@ -156,11 +165,11 @@ export const Car: React.FC<CarProps> = ({
     // Update X position smoothly towards target steering
     currentX = THREE.MathUtils.lerp(currentX, targetXRef.current, delta * 8);
 
-    // Update Z position based on speed (km/h conversion)
+    // Update Z position based on speed
     const distanceDelta = (speed * delta * 0.28);
     currentZ += distanceDelta;
 
-    // Clamp track boundaries (Track Z range: 10 down to -560)
+    // Clamp track boundaries
     currentZ = Math.min(15, Math.max(-560, currentZ));
 
     // Store updated positions
@@ -171,14 +180,13 @@ export const Car: React.FC<CarProps> = ({
     // Apply to 3D object transform
     carGroupRef.current.position.set(currentX, 0.35, currentZ);
     carGroupRef.current.rotation.y = rotation;
-    carGroupRef.current.rotation.z = -rotation * 0.4; // Steering tilt roll
+    carGroupRef.current.rotation.z = -rotation * 0.4;
 
     // Animate Wheels spinning proportional to speed
     wheelsRef.current.forEach((wheel) => {
       if (wheel) wheel.rotation.x += speed * delta * 0.15;
     });
 
-    // Send state back to game state manager
     onUpdateState(posRef.current, rotation, Math.abs(Math.round(speed)));
   });
 
@@ -212,23 +220,22 @@ export const Car: React.FC<CarProps> = ({
             />
           </mesh>
 
-          {/* Dual Cyan LED Headlights */}
+          {/* Headlights (Always glowing green/cyan) */}
           <group position={[0, 0.45, -2.05]}>
             <mesh position={[-0.65, 0, 0]}>
               <boxGeometry args={[0.45, 0.12, 0.1]} />
-              <meshBasicMaterial color="#00f0ff" />
+              <meshBasicMaterial color="#00ff66" />
             </mesh>
             <mesh position={[0.65, 0, 0]}>
               <boxGeometry args={[0.45, 0.12, 0.1]} />
-              <meshBasicMaterial color="#00f0ff" />
+              <meshBasicMaterial color="#00ff66" />
             </mesh>
 
-            {/* Projected Headlight Beams */}
             <spotLight
               position={[0, 0, 0]}
               target-position={[0, -0.5, -25]}
-              color="#00f0ff"
-              intensity={8}
+              color="#00ff66"
+              intensity={hasStarted && !hasFinished ? 8 : 2}
               distance={40}
               angle={0.5}
               penumbra={0.4}
@@ -240,25 +247,15 @@ export const Car: React.FC<CarProps> = ({
           <group position={[0, 0.5, 2.05]}>
             <mesh>
               <boxGeometry args={[1.7, 0.12, 0.1]} />
-              <meshBasicMaterial color="#ff0055" />
+              <meshBasicMaterial color="#ff0044" />
             </mesh>
-            <pointLight color="#ff0055" intensity={4} distance={8} />
+            <pointLight color="#ff0044" intensity={3} distance={8} />
           </group>
 
-          {/* Neon Blue Underglow Chassis Lighting */}
-          <pointLight position={[0, -0.1, 0]} color="#00f0ff" intensity={3} distance={6} />
+          {/* Underglow Lighting */}
+          <pointLight position={[0, -0.1, 0]} color="#00ff66" intensity={hasStarted ? 3 : 1} distance={6} />
 
-          {/* Cyber Exhaust Thrusters Glow */}
-          <mesh position={[-0.4, 0.3, 2.1]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.2]} />
-            <meshBasicMaterial color="#00f0ff" />
-          </mesh>
-          <mesh position={[0.4, 0.3, 2.1]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.2]} />
-            <meshBasicMaterial color="#00f0ff" />
-          </mesh>
-
-          {/* 4 Alloy Wheels with Glowing Calipers */}
+          {/* 4 Alloy Wheels */}
           {[
             [-0.95, 0.15, -1.3],
             [0.95, 0.15, -1.3],
@@ -278,7 +275,7 @@ export const Car: React.FC<CarProps> = ({
               </mesh>
               <mesh rotation={[0, 0, Math.PI / 2]}>
                 <cylinderGeometry args={[0.22, 0.22, 0.32, 12]} />
-                <meshBasicMaterial color="#00f0ff" wireframe />
+                <meshBasicMaterial color="#00ff66" wireframe />
               </mesh>
             </group>
           ))}

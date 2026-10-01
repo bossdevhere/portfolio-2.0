@@ -1,44 +1,42 @@
 import React from 'react';
 import { SKILL_CATEGORIES } from '../data/portfolio';
-import { Cpu } from 'lucide-react';
 
 export const SkillsSection: React.FC = () => {
   return (
-    <div className="space-y-6 text-slate-200">
-      <div className="flex items-center space-x-4 border-b border-amber-500/30 pb-4">
-        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400">
-          <Cpu className="w-8 h-8" />
-        </div>
+    <div className="space-y-6 text-[#F5F5F5]">
+      {/* Header Banner */}
+      <div className="flex items-center justify-between border-b border-white/10 pb-4">
         <div>
-          <h2 className="text-2xl font-bold font-orbitron text-white tracking-wide">
-            TECH MATRIX & CAPABILITIES
+          <span className="font-mono text-xs text-[#00ff66] tracking-[0.2em] uppercase">
+            SECTION 05 / 07 — CAPABILITIES
+          </span>
+          <h2 className="text-2xl font-bold font-orbitron text-[#F5F5F5] uppercase tracking-wider mt-1">
+            TECH MATRIX
           </h2>
-          <p className="text-amber-400 font-rajdhani text-lg font-medium">
-            Core Technical Skills, Frameworks & Tooling
-          </p>
         </div>
+        <span className="font-mono text-xs text-[#8A8A8A]">SYSTEM / V2.0</span>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 font-mono">
         {SKILL_CATEGORIES.map((category, idx) => (
-          <div key={idx} className="p-5 bg-slate-900/60 border border-slate-800 rounded-xl">
-            <h3 className="text-lg font-bold font-rajdhani text-amber-400 mb-4 tracking-wider uppercase">
-              // {category.name}
-            </h3>
+          <div key={idx} className="hud-panel p-5 rounded-xl border border-white/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#00ff66] tracking-widest uppercase">
+                // {category.name}
+              </span>
+              <span className="text-[10px] text-[#8A8A8A]">0{idx + 1}</span>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="hud-line-green" />
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-1">
               {category.skills.map((skill, sIdx) => (
-                <div key={sIdx} className="space-y-1.5">
-                  <div className="flex justify-between text-sm font-semibold">
-                    <span className="text-white">{skill.name}</span>
-                    <span className="text-amber-400 font-mono">{skill.level}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                    <div
-                      className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-1000"
-                      style={{ width: `${skill.level}%` }}
-                    />
-                  </div>
+                <div
+                  key={sIdx}
+                  className="p-3 bg-white/5 border border-white/5 rounded-lg flex items-center justify-between text-xs"
+                >
+                  <span className="text-[#F5F5F5] font-semibold">{skill.name}</span>
+                  <span className="text-[#00ff66] text-[10px] font-bold">{skill.level}%</span>
                 </div>
               ))}
             </div>

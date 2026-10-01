@@ -7,12 +7,14 @@ interface CameraControllerProps {
   carRotation: number;
   carSpeed: number;
   cameraMode: 'third-person' | 'hood' | 'top-down';
+  hasCrashed?: boolean;
 }
 
 export const CameraController: React.FC<CameraControllerProps> = ({
   carPosition,
   carSpeed,
   cameraMode,
+  hasCrashed = false,
 }) => {
   const { camera } = useThree();
   const targetCamPos = useRef(new THREE.Vector3());
@@ -31,14 +33,19 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       targetLookAt.current.set(x, y, z - 10);
     } else {
       // Default: Cinematic Third-Person Chase Cam
-      // As car speeds up, camera pulls back slightly and lowers
       const speedOffset = (carSpeed / 100) * 2;
       targetCamPos.current.set(
-        x * 0.4, // Slight lateral lag for cinematic feel
+        x * 0.4,
         y + 3.2,
         z + 8.5 + speedOffset
       );
       targetLookAt.current.set(x * 0.2, y + 1.2, z - 15);
+    }
+
+    // Apply subtle 3D camera shake during collision (does NOT affect HUD)
+    if (hasCrashed) {
+      targetCamPos.current.x += (Math.random() - 0.5) * 0.3;
+      targetCamPos.current.y += (Math.random() - 0.5) * 0.3;
     }
 
     // Smooth Lerp Camera Position
@@ -57,7 +64,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
     // Dynamic FOV Speed Warp Effect
     if (camera instanceof THREE.PerspectiveCamera) {
-      const targetFov = 60 + (carSpeed / 120) * 15; // Warp up to 75 FOV at max speed
+      const targetFov = 60 + (carSpeed / 120) * 15;
       camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, delta * 4);
       camera.updateProjectionMatrix();
     }

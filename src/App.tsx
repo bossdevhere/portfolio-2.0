@@ -21,11 +21,11 @@ export const App: React.FC = () => {
   } = useGameState();
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-950">
-      {/* CRT Scanline Atmospheric Overlay */}
-      <div className="scanlines" />
+    <div className="relative w-screen h-screen overflow-hidden bg-[#050505]">
+      {/* Subtle Vignette Ambient Overlay */}
+      <div className="vignette-overlay" />
 
-      {/* 3D World Canvas */}
+      {/* 3D World Canvas (Game Layer) */}
       <Suspense fallback={<LoadingScreen />}>
         <World
           currentSection={state.currentSection}
@@ -38,6 +38,7 @@ export const App: React.FC = () => {
           onCollision={handleCollision}
           onScorePass={addObstacleScore}
           hasStarted={state.hasStarted}
+          hasFinished={state.hasFinished}
           carPosition={state.carPosition}
           carSpeed={state.carSpeed}
           hasCrashed={state.hasCrashed}
@@ -52,7 +53,7 @@ export const App: React.FC = () => {
           onToggleAudio={toggleAudio}
         />
       ) : (
-        /* HUD UI Overlay */
+        /* HUD UI Overlay (Stable Layer) */
         <PortfolioUI
           state={state}
           onSelectSection={navigateToSection}
