@@ -36,18 +36,21 @@ export const App: React.FC = () => {
     right: false,
   });
 
-  // ESC key listener for Desktop pause/resume
+  // Global ESC key listener for Desktop pause/resume (unfocused window support)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Escape' && state.hasStarted && !state.hasFinished) {
-        togglePause();
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        if (state.hasStarted && !state.hasFinished) {
+          e.preventDefault();
+          togglePause();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [state.hasStarted, state.hasFinished, togglePause]);
 
-  // Clear all mobile inputs when orientation changes or pause/crash occurs
+  // Clear all mobile & keyboard input states when orientation changes or pause/crash occurs
   useEffect(() => {
     if (isMobilePortrait || state.isPaused || state.hasCrashed || state.hasFinished) {
       if (mobileInputRef.current) {

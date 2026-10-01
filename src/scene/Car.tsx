@@ -76,9 +76,11 @@ export const Car: React.FC<CarProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.code === 'Escape') return;
       keys.current[e.code] = true;
     };
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.code === 'Escape') return;
       keys.current[e.code] = false;
     };
 
@@ -124,6 +126,7 @@ export const Car: React.FC<CarProps> = ({
     if (!hasStarted || hasFinished || isMobilePortrait) {
       speedRef.current = 0;
       scrollVelocityRef.current = 0;
+      keys.current = {};
       onUpdateState(posRef.current, rotationRef.current, 0);
       return;
     }
