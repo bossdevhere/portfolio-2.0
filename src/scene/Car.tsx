@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF, Html } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import { FloatingJoystick } from '../components/ui/FloatingJoystick';
 
 interface CarProps {
   position: [number, number, number];
@@ -17,12 +16,12 @@ interface CarProps {
 
 // Configurable Steering & Input Parameters
 const STEERING_CONFIG = {
+  SENSITIVITY: 0.008,      // Smooth drag sensitivity for pointer/touch
   KEYBOARD_SPEED: 7.5,     // Keyboard lane steering speed (units/sec)
-  DEAD_ZONE: 0.08,         // Normalized analog steering dead zone threshold
-  MAX_STEER_DELTA: 0.35,   // Maximum target X shift per input update
+  DEAD_ZONE: 3,            // Minimum pixel delta threshold
+  MAX_STEER_DELTA: 0.35,   // Maximum target X shift per input update (prevents sudden jumps)
   MAX_LANE_X: 5.2,         // Road boundary bounds [-5.2, 5.2]
   DAMPING_FACTOR: 6.0,     // Weight & smooth lerping factor
-  JOYSTICK_RADIUS: 45,     // Floating joystick radius in pixels
 };
 
 export const Car: React.FC<CarProps> = ({
@@ -43,23 +42,6 @@ export const Car: React.FC<CarProps> = ({
   const rotationRef = useRef<number>(0);
   const targetXRef = useRef<number>(position[0]);
   const scrollVelocityRef = useRef<number>(0);
-
-  // Floating Analog Joystick State & Refs
-  const activePointerIdRef = useRef<number | null>(null);
-  const isJoystickActiveRef = useRef<boolean>(false);
-  const basePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const knobPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const analogSteerRef = useRef<number>(0);
-
-  const [joystickUI, setJoystickUI] = useState<{
-    active: boolean;
-    basePos: { x: number; y: number };
-    knobPos: { x: number; y: number };
-  }>({
-    active: false,
-    basePos: { x: 0, y: 0 },
-    knobPos: { x: 0, y: 0 },
-  });
 
   // Sync external position changes (teleport on crash/reset)
   useEffect(() => {
@@ -98,7 +80,11 @@ export const Car: React.FC<CarProps> = ({
       keys.current[e.code] = false;
     };
 
-    // FLOATING ANALOG JOYSTICK POINTER HANDLERS
+    // RESTORED TOUCH / POINTER DRAG STEERING SYSTEM
+    let isPointerDown = false;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+
     const handlePointerDown = (e: PointerEvent) => {
       if (!hasStarted || hasFinished || isMobilePortrait) return;
 
@@ -112,72 +98,48 @@ export const Car: React.FC<CarProps> = ({
         return;
       }
 
-      // Ignore secondary touches if joystick is already active
-      if (activePointerIdRef.current !== null) return;
-
-      activePointerIdRef.current = e.pointerId;
-      isJoystickActiveRef.current = true;
-      basePosRef.current = { x: e.clientX, y: e.clientY };
-      knobPosRef.current = { x: 0, y: 0 };
-      analogSteerRef.current = 0;
-
-      setJoystickUI({
-        active: true,
-        basePos: { x: e.clientX, y: e.clientY },
-        knobPos: { x: 0, y: 0 },
-      });
+      isPointerDown = true;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-      if (!isJoystickActiveRef.current || e.pointerId !== activePointerIdRef.current) return;
+      if (!isPointerDown || !hasStarted || hasFinished || isMobilePortrait) return;
 
-      const dx = e.clientX - basePosRef.current.x;
-      const dy = e.clientY - basePosRef.current.y;
-      const dist = Math.hypot(dx, dy);
-      const clampedDist = Math.min(dist, STEERING_CONFIG.JOYSTICK_RADIUS);
-      const angle = Math.atan2(dy, dx);
+      const diffX = e.clientX - pointerStartX;
+      const diffY = pointerStartY - e.clientY; // Positive diffY is swipe UP (forward)
 
-      const knobX = Math.cos(angle) * clampedDist;
-      const knobY = Math.sin(angle) * clampedDist;
+      // Apply Dead Zone check to ignore minor jitter
+      if (Math.abs(diffX) >= STEERING_CONFIG.DEAD_ZONE) {
+        // Intuitive Mapping: Swipe/Drag LEFT (diffX < 0) moves car LEFT (decreases X)
+        // Swipe/Drag RIGHT (diffX > 0) moves car RIGHT (increases X)
+        const steerDelta = Math.min(
+          STEERING_CONFIG.MAX_STEER_DELTA,
+          Math.max(-STEERING_CONFIG.MAX_STEER_DELTA, diffX * STEERING_CONFIG.SENSITIVITY)
+        );
 
-      let normX = knobX / STEERING_CONFIG.JOYSTICK_RADIUS;
-      if (Math.abs(normX) < STEERING_CONFIG.DEAD_ZONE) {
-        normX = 0;
+        targetXRef.current = Math.min(
+          STEERING_CONFIG.MAX_LANE_X,
+          Math.max(-STEERING_CONFIG.MAX_LANE_X, targetXRef.current + steerDelta)
+        );
+
+        pointerStartX = e.clientX;
       }
 
-      analogSteerRef.current = normX;
-      knobPosRef.current = { x: knobX, y: knobY };
-
-      // Optional vertical drag for scroll velocity adjustment
-      if (Math.abs(dy) >= 10) {
-        scrollVelocityRef.current += -dy * 0.02;
+      // Vertical drag drives forward / backward
+      if (Math.abs(diffY) >= STEERING_CONFIG.DEAD_ZONE) {
+        scrollVelocityRef.current += diffY * 0.4;
+        pointerStartY = e.clientY;
       }
-
-      setJoystickUI({
-        active: true,
-        basePos: basePosRef.current,
-        knobPos: { x: knobX, y: knobY },
-      });
     };
 
-    const handlePointerUp = (e: PointerEvent) => {
-      if (e.pointerId === activePointerIdRef.current) {
-        activePointerIdRef.current = null;
-        isJoystickActiveRef.current = false;
-        analogSteerRef.current = 0;
-        knobPosRef.current = { x: 0, y: 0 };
-
-        setJoystickUI({
-          active: false,
-          basePos: { x: 0, y: 0 },
-          knobPos: { x: 0, y: 0 },
-        });
-      }
+    const handlePointerUp = () => {
+      isPointerDown = false;
     };
 
     // Wheel / Trackpad listener
     const handleWheel = (e: WheelEvent) => {
-      if (!hasStarted || hasFinished) return;
+      if (!hasStarted || hasFinished || isMobilePortrait) return;
 
       const clampedDeltaY = Math.min(100, Math.max(-100, e.deltaY));
       const clampedDeltaX = Math.min(100, Math.max(-100, e.deltaX));
@@ -186,7 +148,7 @@ export const Car: React.FC<CarProps> = ({
       scrollVelocityRef.current += clampedDeltaY * 0.6;
 
       // Horizontal trackpad scroll: e.deltaX > 0 is scroll RIGHT (move RIGHT)
-      if (Math.abs(clampedDeltaX) >= 5) {
+      if (Math.abs(clampedDeltaX) >= STEERING_CONFIG.DEAD_ZONE) {
         const wheelSteerDelta = Math.min(
           STEERING_CONFIG.MAX_STEER_DELTA,
           Math.max(-STEERING_CONFIG.MAX_STEER_DELTA, clampedDeltaX * 0.006)
@@ -216,7 +178,7 @@ export const Car: React.FC<CarProps> = ({
       window.removeEventListener('pointercancel', handlePointerUp);
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [hasStarted, hasFinished]);
+  }, [hasStarted, hasFinished, isMobilePortrait]);
 
   useFrame((_, delta) => {
     if (!carGroupRef.current) return;
@@ -225,9 +187,6 @@ export const Car: React.FC<CarProps> = ({
     if (!hasStarted || hasFinished || isMobilePortrait) {
       speedRef.current = 0;
       scrollVelocityRef.current = 0;
-      isJoystickActiveRef.current = false;
-      analogSteerRef.current = 0;
-      activePointerIdRef.current = null;
       onUpdateState(posRef.current, rotationRef.current, 0);
       return;
     }
@@ -252,7 +211,7 @@ export const Car: React.FC<CarProps> = ({
       }
       targetXRef.current = THREE.MathUtils.lerp(targetXRef.current, 0, delta * 2);
     } else {
-      // Manual Controls: Floating Joystick or Keyboard
+      // Manual Controls: Keyboard (W/S/A/D or Arrows) or Touch/Scroll
       const isAccelerating = keys.current['KeyW'] || keys.current['ArrowUp'];
       const isBraking = keys.current['KeyS'] || keys.current['ArrowDown'];
       const isSteeringLeft = keys.current['KeyA'] || keys.current['ArrowLeft'];
@@ -266,34 +225,21 @@ export const Car: React.FC<CarProps> = ({
       } else if (Math.abs(scrollImpulse) > 0.5) {
         const targetScrollSpeed = -scrollImpulse * 1.5;
         speed = THREE.MathUtils.lerp(speed, targetScrollSpeed, delta * 4);
-      } else if (isJoystickActiveRef.current) {
-        // Cruise forward smoothly when actively steering with touch joystick
-        speed = THREE.MathUtils.lerp(speed, -75, delta * 3);
       } else {
         speed = THREE.MathUtils.lerp(speed, 0, delta * (isHandbrake ? 8 : 2));
       }
 
-      // Horizontal Steering: Floating Joystick takes precedence during active touch
-      if (isJoystickActiveRef.current) {
-        targetXRef.current = analogSteerRef.current * STEERING_CONFIG.MAX_LANE_X;
-      } else {
-        // Releasing touch joystick smoothly returns steering target to neutral (0)
-        if (analogSteerRef.current === 0 && !isSteeringLeft && !isSteeringRight) {
-          targetXRef.current = THREE.MathUtils.lerp(targetXRef.current, 0, delta * 4);
-        }
-
-        // Keyboard Lane Steering
-        if (isSteeringLeft) {
-          targetXRef.current = Math.max(
-            -STEERING_CONFIG.MAX_LANE_X,
-            targetXRef.current - delta * STEERING_CONFIG.KEYBOARD_SPEED
-          );
-        } else if (isSteeringRight) {
-          targetXRef.current = Math.min(
-            STEERING_CONFIG.MAX_LANE_X,
-            targetXRef.current + delta * STEERING_CONFIG.KEYBOARD_SPEED
-          );
-        }
+      // Keyboard Lane Steering
+      if (isSteeringLeft) {
+        targetXRef.current = Math.max(
+          -STEERING_CONFIG.MAX_LANE_X,
+          targetXRef.current - delta * STEERING_CONFIG.KEYBOARD_SPEED
+        );
+      } else if (isSteeringRight) {
+        targetXRef.current = Math.min(
+          STEERING_CONFIG.MAX_LANE_X,
+          targetXRef.current + delta * STEERING_CONFIG.KEYBOARD_SPEED
+        );
       }
     }
 
@@ -335,18 +281,7 @@ export const Car: React.FC<CarProps> = ({
   });
 
   return (
-    <>
-      {/* Visual Floating Analog Joystick DOM overlay */}
-      <Html fullscreen style={{ pointerEvents: 'none', position: 'fixed', inset: 0, zIndex: 50 }}>
-        <FloatingJoystick
-          active={joystickUI.active}
-          basePos={joystickUI.basePos}
-          knobPos={joystickUI.knobPos}
-          radius={STEERING_CONFIG.JOYSTICK_RADIUS}
-        />
-      </Html>
-
-      <group ref={carGroupRef} position={position}>
+    <group ref={carGroupRef} position={position}>
       {customCarModel ? (
         <primitive object={customCarModel} scale={[1, 1, 1]} />
       ) : (
@@ -437,6 +372,5 @@ export const Car: React.FC<CarProps> = ({
         </group>
       )}
     </group>
-    </>
   );
 };
