@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { AdaptiveDpr, Bvh } from '@react-three/drei';
 import { Lighting } from './Lighting';
 import { Environment } from './Environment';
 import { Road } from './Road';
@@ -30,27 +31,36 @@ export const World: React.FC<WorldProps> = ({
     <div className="w-full h-full absolute inset-0 z-0">
       <Canvas
         shadows
-        camera={{ position: [0, 3.5, 8.5], fov: 60 }}
-        gl={{ antialias: true, alpha: false }}
+        dpr={[1, 1.5]}
+        camera={{ position: [0, 3.5, 8.5], fov: 60, near: 0.1, far: 300 }}
+        gl={{
+          powerPreference: 'high-performance',
+          antialias: true,
+          stencil: false,
+          depth: true,
+        }}
       >
-        <Suspense fallback={null}>
-          <Lighting />
-          <Environment />
-          <Road currentSection={currentSection} onSelectSection={onSelectSection} />
-          <Car
-            position={[0, 0.35, 0]}
-            targetZ={targetZPosition}
-            isAutoDriving={isAutoDriving}
-            onUpdateState={onUpdateCarState}
-            audioMuted={audioMuted}
-          />
-          <CameraController
-            carPosition={[0, 0.35, targetZPosition]}
-            carRotation={0}
-            carSpeed={0}
-            cameraMode={cameraMode}
-          />
-        </Suspense>
+        <AdaptiveDpr pixelated />
+        <Bvh firstHitOnly>
+          <Suspense fallback={null}>
+            <Lighting />
+            <Environment />
+            <Road currentSection={currentSection} onSelectSection={onSelectSection} />
+            <Car
+              position={[0, 0.35, 0]}
+              targetZ={targetZPosition}
+              isAutoDriving={isAutoDriving}
+              onUpdateState={onUpdateCarState}
+              audioMuted={audioMuted}
+            />
+            <CameraController
+              carPosition={[0, 0.35, targetZPosition]}
+              carRotation={0}
+              carSpeed={0}
+              cameraMode={cameraMode}
+            />
+          </Suspense>
+        </Bvh>
       </Canvas>
     </div>
   );
