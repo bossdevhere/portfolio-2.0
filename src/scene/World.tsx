@@ -44,7 +44,7 @@ export const World: React.FC<WorldProps> = ({
   hasCrashed,
 }) => {
   return (
-    <div className="w-full h-full absolute inset-0 z-0">
+    <div className="w-full h-full absolute inset-0 z-0 touch-none">
       <Canvas
         shadows
         dpr={[1, 1.5]}
