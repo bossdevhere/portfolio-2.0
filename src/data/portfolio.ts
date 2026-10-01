@@ -1,10 +1,10 @@
-import { ProjectItem, ExperienceItem, SkillCategory, SectionWaypoint } from '../types';
+import { ProjectItem, ExperienceItem, SkillCategory, SectionWaypoint, EducationItem } from '../types';
 
 export const SECTION_WAYPOINTS: SectionWaypoint[] = [
   {
     id: 'start',
-    title: 'LAUNCHPAD',
-    subtitle: 'Futuristic Night Track',
+    title: 'LAUNCHING PAD',
+    subtitle: 'Start Track',
     zPosition: 0,
     iconName: 'Play',
     color: '#00f0ff',
@@ -18,51 +18,51 @@ export const SECTION_WAYPOINTS: SectionWaypoint[] = [
     color: '#7000ff',
   },
   {
-    id: 'experience',
-    title: 'EXPERIENCE',
-    subtitle: 'Career & Milestones',
-    zPosition: -150,
-    iconName: 'Briefcase',
+    id: 'education',
+    title: 'EDUCATION',
+    subtitle: 'Academic Foundations',
+    zPosition: -140,
+    iconName: 'GraduationCap',
     color: '#ff007f',
   },
   {
-    id: 'projects',
-    title: 'FEATURED PROJECTS',
-    subtitle: 'Full-Stack & Web Apps',
-    zPosition: -240,
-    iconName: 'Code',
+    id: 'experience',
+    title: 'EXPERIENCE',
+    subtitle: 'Career & Milestones',
+    zPosition: -220,
+    iconName: 'Briefcase',
     color: '#00ff66',
+  },
+  {
+    id: 'projects',
+    title: 'PROJECTS',
+    subtitle: 'Full-Stack & Web Apps',
+    zPosition: -300,
+    iconName: 'Code',
+    color: '#ffaa00',
   },
   {
     id: 'skills',
     title: 'TECH MATRIX',
     subtitle: 'Core Capabilities & Tools',
-    zPosition: -330,
+    zPosition: -380,
     iconName: 'Cpu',
-    color: '#ffaa00',
-  },
-  {
-    id: 'ai',
-    title: 'AI & MACHINE LEARNING',
-    subtitle: 'Intelligent Systems & Neural Nets',
-    zPosition: -420,
-    iconName: 'Brain',
     color: '#00d2ff',
   },
   {
-    id: 'games',
-    title: 'CREATIVE & GAMES',
-    subtitle: '3D Simulation & Graphics',
-    zPosition: -510,
-    iconName: 'Gamepad2',
+    id: 'contact',
+    title: 'CONTACT',
+    subtitle: 'Get In Touch',
+    zPosition: -460,
+    iconName: 'Mail',
     color: '#e040fb',
   },
   {
-    id: 'contact',
-    title: 'CONTACT & RESUME',
-    subtitle: 'Get In Touch',
-    zPosition: -600,
-    iconName: 'Mail',
+    id: 'finish',
+    title: 'FINISH LINE',
+    subtitle: 'Victory Checkpoint',
+    zPosition: -540,
+    iconName: 'Trophy',
     color: '#00ffcc',
   },
 ];
@@ -79,6 +79,32 @@ export const PERSONAL_INFO = {
   twitter: 'https://twitter.com/devenrajput',
   resumeUrl: '#',
 };
+
+export const EDUCATION_DATA: EducationItem[] = [
+  {
+    id: 'edu-1',
+    degree: 'Bachelor of Technology (B.Tech) in Computer Science',
+    institution: 'University Department of Computer Science & Engineering',
+    period: '2020 — 2024',
+    gpaOrGrade: 'First Class with Distinction (8.9 / 10 CGPA)',
+    details: [
+      'Specialized in Computer Graphics, Algorithms, Software Architecture, and Web Engineering.',
+      'Published research paper on WebGL performance optimizations in interactive web applications.',
+      'Led the university Coding & Robotics Club, organizing regional hackathons with 500+ attendees.'
+    ]
+  },
+  {
+    id: 'edu-2',
+    degree: 'Higher Secondary School Certificate (HSC) — Science & Mathematics',
+    institution: 'State Board of Secondary & Higher Secondary Education',
+    period: '2018 — 2020',
+    gpaOrGrade: '91.4% Marks',
+    details: [
+      'Top 1% in Mathematics, Physics, and Computer Science.',
+      'Built early Java & C++ arcade games as high school capstone projects.'
+    ]
+  }
+];
 
 export const EXPERIENCE_DATA: ExperienceItem[] = [
   {
@@ -102,8 +128,7 @@ export const EXPERIENCE_DATA: ExperienceItem[] = [
     location: 'Hybrid',
     description: [
       'Built custom WebGL shaders, particle systems, and kinetic UI animations for award-winning marketing sites.',
-      'Collaborated with 3D artists to integrate complex rigged GLTF models and WebAudio synthesizers.',
-      'Implemented automated CI/CD deployment workflows and cross-browser performance benchmarks.'
+      'Collaborated with 3D artists to integrate complex rigged GLTF models and WebAudio synthesizers.'
     ],
     skills: ['React', 'GSAP', 'Three.js', 'Vite', 'CSS Modules', 'Web Audio API']
   },
@@ -115,7 +140,7 @@ export const EXPERIENCE_DATA: ExperienceItem[] = [
     location: 'On-site',
     description: [
       'Developed real-time dashboard analytics platforms processing over 500k daily WebSocket events.',
-      'Designed modular React component libraries with 95%+ unit test coverage using Jest & React Testing Library.'
+      'Designed modular React component libraries with 95%+ unit test coverage.'
     ],
     skills: ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'WebSockets', 'Docker']
   }
@@ -167,6 +192,31 @@ export const PROJECTS_DATA: ProjectItem[] = [
   }
 ];
 
+export const AI_PROJECTS: ProjectItem[] = [
+  {
+    id: 'ai-1',
+    title: 'Autonomous Navigation Sim',
+    category: 'Robotics & Reinforcement Learning',
+    description: '3D vehicle agent trained using Deep Q-Learning (DQN) to navigate obstacle courses smoothly in web browser.',
+    tags: ['Python', 'TensorFlow.js', 'Three.js', 'Physics.js'],
+    github: 'https://github.com/bossdevhere/auto-nav-sim',
+    metrics: '98.4% Accuracy • Real-time Reinforcement'
+  }
+];
+
+export const GAME_PROJECTS: ProjectItem[] = [
+  {
+    id: 'game-1',
+    title: 'Neon Overdrive 1984',
+    category: '3D Arcade Racer',
+    description: 'Retro synthwave infinite driving game with dynamic synth soundtrack, powerups, particle trails, and local highscores.',
+    tags: ['Three.js', 'R3F', 'Howler.js', 'GSAP'],
+    github: 'https://github.com/bossdevhere/neon-overdrive',
+    link: 'https://neon-overdrive.play',
+    metrics: '60 FPS • Custom Physics Engine'
+  }
+];
+
 export const SKILL_CATEGORIES: SkillCategory[] = [
   {
     name: 'Frontend & 3D Web',
@@ -197,48 +247,5 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
       { name: 'Blender 3D Modeling', level: 78 },
       { name: 'Figma UI/UX Design', level: 85 },
     ]
-  }
-];
-
-export const AI_PROJECTS: ProjectItem[] = [
-  {
-    id: 'ai-1',
-    title: 'Autonomous Navigation Sim',
-    category: 'Robotics & Reinforcement Learning',
-    description: '3D vehicle agent trained using Deep Q-Learning (DQN) to navigate obstacle courses smoothly in web browser.',
-    tags: ['Python', 'TensorFlow.js', 'Three.js', 'Physics.js'],
-    github: 'https://github.com/bossdevhere/auto-nav-sim',
-    metrics: '98.4% Accuracy • Real-time Reinforcement'
-  },
-  {
-    id: 'ai-2',
-    title: 'CodeSynth LLM Assistant',
-    category: 'NLP & AI Code Gen',
-    description: 'Context-aware developer assistant agent capable of auto-generating unit tests and architectural refactoring suggestions.',
-    tags: ['TypeScript', 'LangChain', 'OpenAI API', 'React'],
-    github: 'https://github.com/bossdevhere/codesynth-ai',
-    metrics: 'Stream Processing • Multi-file Refactoring'
-  }
-];
-
-export const GAME_PROJECTS: ProjectItem[] = [
-  {
-    id: 'game-1',
-    title: 'Neon Overdrive 1984',
-    category: '3D Arcade Racer',
-    description: 'Retro synthwave infinite driving game with dynamic synth soundtrack, powerups, particle trails, and local highscores.',
-    tags: ['Three.js', 'R3F', 'Howler.js', 'GSAP'],
-    github: 'https://github.com/bossdevhere/neon-overdrive',
-    link: 'https://neon-overdrive.play',
-    metrics: '60 FPS • Custom Physics Engine'
-  },
-  {
-    id: 'game-2',
-    title: 'Orbit Siege VR',
-    category: 'WebXR Space Combat',
-    description: 'Immersive WebXR zero-gravity space shooter playable directly in browser or Meta Quest headsets.',
-    tags: ['WebXR', 'Three.js', 'WebAudio API'],
-    github: 'https://github.com/bossdevhere/orbit-siege-vr',
-    metrics: 'Cross-platform VR Support'
   }
 ];

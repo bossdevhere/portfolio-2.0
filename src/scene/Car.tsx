@@ -12,6 +12,7 @@ interface CarProps {
 }
 
 export const Car: React.FC<CarProps> = ({
+  position,
   targetZ,
   isAutoDriving,
   onUpdateState,
@@ -20,11 +21,25 @@ export const Car: React.FC<CarProps> = ({
   const wheelsRef = useRef<THREE.Group[]>([]);
 
   // Physics state
-  const posRef = useRef<[number, number, number]>([0, 0, 0]);
+  const posRef = useRef<[number, number, number]>(position);
   const speedRef = useRef<number>(0);
   const rotationRef = useRef<number>(0);
   const targetXRef = useRef<number>(0);
   const scrollVelocityRef = useRef<number>(0);
+
+  // Sync external position changes (e.g. Teleport on collision or game reset)
+  useEffect(() => {
+    // If distance between posRef and incoming position is large, teleport
+    const distZ = Math.abs(posRef.current[2] - position[2]);
+    if (distZ > 5) {
+      posRef.current = [...position];
+      speedRef.current = 0;
+      targetXRef.current = position[0];
+      if (carGroupRef.current) {
+        carGroupRef.current.position.set(...position);
+      }
+    }
+  }, [position]);
 
   // Keyboard control states
   const keys = useRef<{ [key: string]: boolean }>({});
@@ -52,7 +67,6 @@ export const Car: React.FC<CarProps> = ({
 
     // Scroll Wheel / Trackpad listener for forward & backward driving
     const handleWheel = (e: WheelEvent) => {
-      // deltaY > 0 is scroll down (drive forward), deltaY < 0 is scroll up (reverse)
       const clampedDelta = Math.min(100, Math.max(-100, e.deltaY));
       scrollVelocityRef.current += clampedDelta * 0.8;
     };
@@ -109,7 +123,7 @@ export const Car: React.FC<CarProps> = ({
       }
       targetXRef.current = THREE.MathUtils.lerp(targetXRef.current, 0, delta * 2);
     } else {
-      // Manual Player Controls (Keyboard W/S or Arrow Keys + Scroll Wheel / Touch Swipe)
+      // Manual Player Controls
       const isAccelerating = keys.current['KeyW'] || keys.current['ArrowUp'];
       const isBraking = keys.current['KeyS'] || keys.current['ArrowDown'];
       const isSteeringLeft = keys.current['KeyA'] || keys.current['ArrowLeft'];
@@ -121,7 +135,6 @@ export const Car: React.FC<CarProps> = ({
       } else if (isBraking) {
         speed = THREE.MathUtils.lerp(speed, 40, delta * 3); // Reverse
       } else if (Math.abs(scrollImpulse) > 0.5) {
-        // Scroll wheel driven speed (Positive deltaY drives forward, negative deltaY drives backward)
         const targetScrollSpeed = -scrollImpulse * 1.5;
         speed = THREE.MathUtils.lerp(speed, targetScrollSpeed, delta * 4);
       } else {
@@ -147,8 +160,8 @@ export const Car: React.FC<CarProps> = ({
     const distanceDelta = (speed * delta * 0.28);
     currentZ += distanceDelta;
 
-    // Clamp track boundaries so car never falls off track (Track Z range: 10 down to -650)
-    currentZ = Math.min(15, Math.max(-650, currentZ));
+    // Clamp track boundaries (Track Z range: 10 down to -560)
+    currentZ = Math.min(15, Math.max(-560, currentZ));
 
     // Store updated positions
     posRef.current = [currentX, 0.35, currentZ];
@@ -170,7 +183,7 @@ export const Car: React.FC<CarProps> = ({
   });
 
   return (
-    <group ref={carGroupRef} position={[0, 0.35, 0]}>
+    <group ref={carGroupRef} position={position}>
       {customCarModel ? (
         <primitive object={customCarModel} scale={[1, 1, 1]} />
       ) : (
@@ -247,10 +260,10 @@ export const Car: React.FC<CarProps> = ({
 
           {/* 4 Alloy Wheels with Glowing Calipers */}
           {[
-            [-0.95, 0.15, -1.3], // Front Left
-            [0.95, 0.15, -1.3],  // Front Right
-            [-0.95, 0.15, 1.3],   // Rear Left
-            [0.95, 0.15, 1.3],    // Rear Right
+            [-0.95, 0.15, -1.3],
+            [0.95, 0.15, -1.3],
+            [-0.95, 0.15, 1.3],
+            [0.95, 0.15, 1.3],
           ].map((pos, idx) => (
             <group
               key={idx}
@@ -263,7 +276,6 @@ export const Car: React.FC<CarProps> = ({
                 <cylinderGeometry args={[0.38, 0.38, 0.3, 24]} />
                 <meshStandardMaterial color="#111827" metalness={0.9} roughness={0.3} />
               </mesh>
-              {/* Alloy Rim Accent */}
               <mesh rotation={[0, 0, Math.PI / 2]}>
                 <cylinderGeometry args={[0.22, 0.22, 0.32, 12]} />
                 <meshBasicMaterial color="#00f0ff" wireframe />

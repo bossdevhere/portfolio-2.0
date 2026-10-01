@@ -1,7 +1,7 @@
 import React from 'react';
 import { SECTION_WAYPOINTS } from '../../data/portfolio';
 import { SectionId } from '../../types';
-import { User, Briefcase, Code, Cpu, Brain, Gamepad2, Mail, Play } from 'lucide-react';
+import { User, Briefcase, Code, Cpu, Mail, Play, GraduationCap, Trophy } from 'lucide-react';
 
 interface NavigationHUDProps {
   currentSection: SectionId;
@@ -12,12 +12,12 @@ interface NavigationHUDProps {
 const ICON_MAP: Record<string, React.ReactNode> = {
   Play: <Play className="w-4 h-4" />,
   User: <User className="w-4 h-4" />,
+  GraduationCap: <GraduationCap className="w-4 h-4" />,
   Briefcase: <Briefcase className="w-4 h-4" />,
   Code: <Code className="w-4 h-4" />,
   Cpu: <Cpu className="w-4 h-4" />,
-  Brain: <Brain className="w-4 h-4" />,
-  Gamepad2: <Gamepad2 className="w-4 h-4" />,
   Mail: <Mail className="w-4 h-4" />,
+  Trophy: <Trophy className="w-4 h-4" />,
 };
 
 export const NavigationHUD: React.FC<NavigationHUDProps> = ({

@@ -11,11 +11,12 @@ export const App: React.FC = () => {
     startExperience,
     navigateToSection,
     updateCarState,
+    handleCollision,
     openModal,
     closeModal,
     toggleAudio,
     setCameraMode,
-    restartTrack,
+    playAgain,
   } = useGameState();
 
   return (
@@ -33,6 +34,9 @@ export const App: React.FC = () => {
           onSelectSection={navigateToSection}
           audioMuted={state.audioMuted}
           cameraMode={state.cameraMode}
+          onCollision={handleCollision}
+          hasStarted={state.hasStarted}
+          carPosition={state.carPosition}
         />
       </Suspense>
 
@@ -52,7 +56,8 @@ export const App: React.FC = () => {
           onCloseModal={closeModal}
           onToggleAudio={toggleAudio}
           onSetCameraMode={setCameraMode}
-          onRestartTrack={restartTrack}
+          onRestartTrack={playAgain}
+          onPlayAgain={playAgain}
         />
       )}
     </div>

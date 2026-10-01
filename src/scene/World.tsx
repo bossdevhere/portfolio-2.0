@@ -6,6 +6,7 @@ import { Environment } from './Environment';
 import { Road } from './Road';
 import { Car } from './Car';
 import { CameraController } from './CameraController';
+import { Obstacles } from './Obstacles';
 import { SectionId } from '../types';
 
 interface WorldProps {
@@ -16,6 +17,9 @@ interface WorldProps {
   onSelectSection: (sectionId: SectionId) => void;
   audioMuted: boolean;
   cameraMode: 'third-person' | 'hood' | 'top-down';
+  onCollision: () => void;
+  hasStarted: boolean;
+  carPosition: [number, number, number];
 }
 
 export const World: React.FC<WorldProps> = ({
@@ -26,6 +30,9 @@ export const World: React.FC<WorldProps> = ({
   onSelectSection,
   audioMuted,
   cameraMode,
+  onCollision,
+  hasStarted,
+  carPosition,
 }) => {
   return (
     <div className="w-full h-full absolute inset-0 z-0">
@@ -47,14 +54,19 @@ export const World: React.FC<WorldProps> = ({
             <Environment />
             <Road currentSection={currentSection} onSelectSection={onSelectSection} />
             <Car
-              position={[0, 0.35, 0]}
+              position={carPosition}
               targetZ={targetZPosition}
               isAutoDriving={isAutoDriving}
               onUpdateState={onUpdateCarState}
               audioMuted={audioMuted}
             />
+            <Obstacles
+              playerPos={carPosition}
+              onCollision={onCollision}
+              isGameActive={hasStarted}
+            />
             <CameraController
-              carPosition={[0, 0.35, targetZPosition]}
+              carPosition={carPosition}
               carRotation={0}
               carSpeed={0}
               cameraMode={cameraMode}

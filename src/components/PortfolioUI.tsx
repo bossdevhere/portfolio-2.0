@@ -4,24 +4,26 @@ import { Speedometer } from './ui/Speedometer';
 import { NavigationHUD } from './ui/NavigationHUD';
 import { MiniMap } from './ui/MiniMap';
 import { SoundControls } from './ui/SoundControls';
+import { LeaderboardModal } from './ui/LeaderboardModal';
+import { FinishModal } from './ui/FinishModal';
 import { AboutSection } from '../sections/AboutSection';
+import { EducationSection } from '../sections/EducationSection';
 import { ExperienceSection } from '../sections/ExperienceSection';
 import { ProjectsSection } from '../sections/ProjectsSection';
 import { SkillsSection } from '../sections/SkillsSection';
-import { AISection } from '../sections/AISection';
-import { GamesSection } from '../sections/GamesSection';
 import { ContactSection } from '../sections/ContactSection';
-import { X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Trophy, Flame, AlertTriangle } from 'lucide-react';
 import { SECTION_WAYPOINTS } from '../data/portfolio';
 
 interface PortfolioUIProps {
   state: GameState;
   onSelectSection: (sectionId: SectionId) => void;
-  onOpenModal: (sectionId: SectionId) => void;
+  onOpenModal: (sectionId: SectionId | 'leaderboard') => void;
   onCloseModal: () => void;
   onToggleAudio: () => void;
   onSetCameraMode: (mode: 'third-person' | 'hood' | 'top-down') => void;
   onRestartTrack: () => void;
+  onPlayAgain: () => void;
 }
 
 export const PortfolioUI: React.FC<PortfolioUIProps> = ({
@@ -32,6 +34,7 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
   onToggleAudio,
   onSetCameraMode,
   onRestartTrack,
+  onPlayAgain,
 }) => {
   const currentWaypointIndex = SECTION_WAYPOINTS.findIndex(w => w.id === state.currentSection);
   const nextWaypoint = SECTION_WAYPOINTS[currentWaypointIndex + 1];
@@ -39,6 +42,16 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
 
   return (
     <div className="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 md:p-6 select-none">
+      {/* Collision Red Flash Overlay */}
+      {state.hasCrashed && (
+        <div className="fixed inset-0 z-50 bg-red-600/30 backdrop-blur-sm flex items-center justify-center animate-ping">
+          <div className="p-4 bg-red-950 border border-red-500 rounded-2xl flex items-center space-x-2 text-white font-orbitron font-bold">
+            <AlertTriangle className="w-6 h-6 text-red-400" />
+            <span>CRASH! RESPAWNING TO CHECKPOINT...</span>
+          </div>
+        </div>
+      )}
+
       {/* Top Header Bar */}
       <NavigationHUD
         currentSection={state.currentSection}
@@ -46,8 +59,29 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
         onOpenModal={onOpenModal}
       />
 
-      {/* Top Right Controls (Sound & Camera) */}
-      <div className="absolute top-4 right-4 pointer-events-auto">
+      {/* Top Right Controls & Score Badge */}
+      <div className="absolute top-4 right-4 pointer-events-auto flex items-center space-x-3">
+        {/* Live Score Counter */}
+        <div className="glass-panel px-4 py-2 rounded-xl border border-amber-500/30 flex items-center space-x-3">
+          <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
+          <div>
+            <span className="text-[10px] font-mono text-slate-400 block -mb-1">SCORE</span>
+            <span className="font-orbitron font-bold text-base text-amber-400">
+              {state.score} PTS
+            </span>
+          </div>
+        </div>
+
+        {/* Leaderboard Button */}
+        <button
+          onClick={() => onOpenModal('leaderboard')}
+          className="p-3 bg-slate-900/80 hover:bg-slate-800 text-amber-400 rounded-xl border border-amber-500/30 transition-all cursor-pointer"
+          title="View Cyber Leaderboard"
+        >
+          <Trophy className="w-4 h-4" />
+        </button>
+
+        {/* Camera & Sound Controls */}
         <SoundControls
           audioMuted={state.audioMuted}
           onToggleAudio={onToggleAudio}
@@ -79,7 +113,7 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
           <span className="text-slate-600">|</span>
 
           <span className="text-slate-400">
-            [Scroll / W/S] Drive Forward & Backward • [A/D] Steer • [Click HUD] Auto-cruise
+            [Scroll / W/S] Drive Forward & Backward • Avoid Obstacles!
           </span>
 
           {nextWaypoint && (
@@ -102,11 +136,28 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
         </div>
       </div>
 
-      {/* Interactive Floating Modal Dialog for Sections */}
-      {state.activeModal && (
+      {/* Leaderboard Modal */}
+      {state.activeModal === 'leaderboard' && (
+        <LeaderboardModal
+          leaderboard={state.leaderboard}
+          highScore={state.highScore}
+          onClose={onCloseModal}
+        />
+      )}
+
+      {/* Finish Line Victory Modal */}
+      {state.hasFinished && (
+        <FinishModal
+          score={state.score}
+          highScore={state.highScore}
+          onPlayAgain={onPlayAgain}
+        />
+      )}
+
+      {/* Section Content Modals */}
+      {state.activeModal && state.activeModal !== 'leaderboard' && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto animate-in fade-in duration-200">
           <div className="relative w-full max-w-4xl max-h-[85vh] glass-panel-purple rounded-3xl p-6 md:p-8 overflow-y-auto border border-cyan-500/30 shadow-2xl">
-            {/* Close Button */}
             <button
               onClick={onCloseModal}
               className="absolute top-6 right-6 p-2 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl border border-slate-700/80 transition-all cursor-pointer"
@@ -114,13 +165,11 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
               <X className="w-6 h-6" />
             </button>
 
-            {/* Modal Content Router */}
             {state.activeModal === 'about' && <AboutSection />}
+            {state.activeModal === 'education' && <EducationSection />}
             {state.activeModal === 'experience' && <ExperienceSection />}
             {state.activeModal === 'projects' && <ProjectsSection />}
             {state.activeModal === 'skills' && <SkillsSection />}
-            {state.activeModal === 'ai' && <AISection />}
-            {state.activeModal === 'games' && <GamesSection />}
             {state.activeModal === 'contact' && <ContactSection />}
           </div>
         </div>

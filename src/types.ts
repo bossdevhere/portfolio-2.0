@@ -1,12 +1,12 @@
 export type SectionId = 
   | 'start'
   | 'about'
+  | 'education'
   | 'experience'
   | 'projects'
   | 'skills'
-  | 'ai'
-  | 'games'
-  | 'contact';
+  | 'contact'
+  | 'finish';
 
 export interface SectionWaypoint {
   id: SectionId;
@@ -26,7 +26,6 @@ export interface ProjectItem {
   link?: string;
   github?: string;
   featured?: boolean;
-  image?: string;
   metrics?: string;
 }
 
@@ -40,9 +39,34 @@ export interface ExperienceItem {
   skills: string[];
 }
 
+export interface EducationItem {
+  id: string;
+  degree: string;
+  institution: string;
+  period: string;
+  gpaOrGrade: string;
+  details: string[];
+}
+
 export interface SkillCategory {
   name: string;
   skills: { name: string; level: number; icon?: string }[];
+}
+
+export interface ObstacleData {
+  id: string;
+  type: 'car' | 'truck';
+  x: number;
+  z: number;
+  speed: number; // movement speed along Z
+  lane: number;
+  color: string;
+}
+
+export interface ScoreEntry {
+  name: string;
+  score: number;
+  date: string;
 }
 
 export interface GameState {
@@ -53,8 +77,12 @@ export interface GameState {
   carRotation: number;
   carSpeed: number; // km/h
   isAutoDriving: boolean;
-  activeModal: SectionId | null;
+  activeModal: SectionId | 'leaderboard' | null;
   audioMuted: boolean;
   cameraMode: 'third-person' | 'hood' | 'top-down';
-  debugMode: boolean;
+  score: number;
+  highScore: number;
+  hasCrashed: boolean;
+  hasFinished: boolean;
+  leaderboard: ScoreEntry[];
 }
