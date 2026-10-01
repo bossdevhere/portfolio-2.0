@@ -7,6 +7,7 @@ import { Road } from './Road';
 import { Car } from './Car';
 import { CameraController } from './CameraController';
 import { Obstacles } from './Obstacles';
+import { RoadsidePortfolioSigns } from './RoadsidePortfolioSigns';
 import { SectionId } from '../types';
 
 interface WorldProps {
@@ -61,6 +62,10 @@ export const World: React.FC<WorldProps> = ({
             <Lighting />
             <Environment />
             <Road currentSection={currentSection} onSelectSection={onSelectSection} />
+
+            {/* 3D World-Space Roadside Holographic Signboards */}
+            <RoadsidePortfolioSigns carZ={carPosition[2]} />
+
             <Car
               position={carPosition}
               targetZ={targetZPosition}

@@ -3,13 +3,7 @@ import { GameState, SectionId } from '../types';
 import { SectionTransitionBanner } from './ui/SectionTransitionBanner';
 import { LeaderboardModal } from './ui/LeaderboardModal';
 import { FinishModal } from './ui/FinishModal';
-import { AboutSection } from '../sections/AboutSection';
-import { EducationSection } from '../sections/EducationSection';
-import { ExperienceSection } from '../sections/ExperienceSection';
-import { ProjectsSection } from '../sections/ProjectsSection';
-import { SkillsSection } from '../sections/SkillsSection';
-import { ContactSection } from '../sections/ContactSection';
-import { X, Volume2, VolumeX, Trophy } from 'lucide-react';
+import { Volume2, VolumeX, Trophy } from 'lucide-react';
 import { SECTION_WAYPOINTS } from '../data/portfolio';
 import gsap from 'gsap';
 
@@ -189,7 +183,7 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
         totalSections={SECTION_WAYPOINTS.length}
       />
 
-      {/* Leaderboard Modal */}
+      {/* Leaderboard Drawer Modal */}
       {state.activeModal === 'leaderboard' && (
         <LeaderboardModal
           leaderboard={state.leaderboard}
@@ -198,34 +192,13 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
         />
       )}
 
-      {/* Finish Line Final Screen */}
+      {/* Finish Line Final Destination Screen */}
       {state.hasFinished && (
         <FinishModal
           score={state.score}
           highScore={state.highScore}
           onPlayAgain={onPlayAgain}
         />
-      )}
-
-      {/* Section Content Modals */}
-      {state.activeModal && state.activeModal !== 'leaderboard' && (
-        <div className="fixed inset-0 z-50 bg-[#050505]/90 backdrop-blur-md flex items-center justify-center p-4 md:p-8 pointer-events-auto animate-in fade-in duration-200">
-          <div className="relative w-full max-w-4xl max-h-[85vh] hud-panel rounded-2xl p-6 md:p-10 overflow-y-auto border border-white/10 shadow-2xl">
-            <button
-              onClick={onCloseModal}
-              className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-white/10 text-[#8A8A8A] hover:text-[#F5F5F5] rounded border border-white/10 transition-all cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {state.activeModal === 'about' && <AboutSection />}
-            {state.activeModal === 'education' && <EducationSection />}
-            {state.activeModal === 'experience' && <ExperienceSection />}
-            {state.activeModal === 'projects' && <ProjectsSection />}
-            {state.activeModal === 'skills' && <SkillsSection />}
-            {state.activeModal === 'contact' && <ContactSection />}
-          </div>
-        </div>
       )}
     </div>
   );
