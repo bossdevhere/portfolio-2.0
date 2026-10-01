@@ -32,6 +32,7 @@ export function useGameState() {
       highScore: savedHighScore,
       hasCrashed: false,
       hasFinished: false,
+      isPaused: false,
       leaderboard: savedLeaderboard,
       scorePopups: [],
     };
@@ -49,6 +50,7 @@ export function useGameState() {
         state.carSpeed > 5 &&
         !state.hasCrashed &&
         !state.hasFinished &&
+        !state.isPaused &&
         !state.activeModal
       ) {
         if (now - lastPassiveScoreTimeRef.current >= SCORING_CONFIG.PASSIVE_SCORE_INTERVAL_MS) {
@@ -237,6 +239,22 @@ export function useGameState() {
     }));
   }, []);
 
+  const togglePause = useCallback(() => {
+    setState((prev) => {
+      if (!prev.hasStarted || prev.hasFinished) return prev;
+      const nextPaused = !prev.isPaused;
+      return {
+        ...prev,
+        isPaused: nextPaused,
+        carSpeed: nextPaused ? 0 : prev.carSpeed,
+      };
+    });
+  }, []);
+
+  const resumeGame = useCallback(() => {
+    setState((prev) => ({ ...prev, isPaused: false }));
+  }, []);
+
   // Play Again / Reset Game
   const playAgain = useCallback(() => {
     setState((prev) => {
@@ -261,6 +279,7 @@ export function useGameState() {
         isAutoDriving: false,
         activeModal: null,
         hasFinished: false,
+        isPaused: false,
         score: 0,
         leaderboard: updatedLeaderboard,
         scorePopups: [],
@@ -279,6 +298,8 @@ export function useGameState() {
     closeModal,
     toggleAudio,
     setCameraMode,
+    togglePause,
+    resumeGame,
     playAgain,
   };
 }

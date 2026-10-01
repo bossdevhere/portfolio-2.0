@@ -3,8 +3,9 @@ import { GameState, SectionId } from '../types';
 import { SectionTransitionBanner } from './ui/SectionTransitionBanner';
 import { LeaderboardModal } from './ui/LeaderboardModal';
 import { FinishModal } from './ui/FinishModal';
+import { PauseModal } from './ui/PauseModal';
 import { MobileControls, MobileInputState } from './ui/MobileControls';
-import { Volume2, VolumeX, Trophy } from 'lucide-react';
+import { Volume2, VolumeX, Trophy, Pause } from 'lucide-react';
 import { SECTION_WAYPOINTS } from '../data/portfolio';
 import gsap from 'gsap';
 
@@ -17,6 +18,8 @@ interface PortfolioUIProps {
   onSetCameraMode: (mode: 'third-person' | 'hood' | 'top-down') => void;
   onRestartTrack: () => void;
   onPlayAgain: () => void;
+  onTogglePause: () => void;
+  onResumeGame: () => void;
   mobileInputRef?: React.RefObject<MobileInputState | null>;
   showMobileControls?: boolean;
 }
@@ -28,6 +31,8 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
   onCloseModal,
   onToggleAudio,
   onPlayAgain,
+  onTogglePause,
+  onResumeGame,
   mobileInputRef,
   showMobileControls = false,
 }) => {
@@ -82,9 +87,20 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
 
             <button
               onClick={onToggleAudio}
-              className="p-2 bg-white/5 hover:bg-white/10 text-[#8A8A8A] hover:text-[#00ff66] rounded border border-white/10 transition-all text-xs cursor-pointer"
+              className="p-2 bg-white/5 hover:bg-white/10 text-[#8A8A8A] hover:text-[#00ff66] rounded border border-white/10 transition-all text-xs cursor-pointer flex items-center"
+              aria-label="Toggle Audio"
             >
               {state.audioMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-[#00ff66]" />}
+            </button>
+
+            {/* HUD Pause Button (Available on both Desktop and Mobile Landscape) */}
+            <button
+              onClick={onTogglePause}
+              className="p-2 px-2.5 bg-white/5 hover:bg-white/10 text-[#8A8A8A] hover:text-[#00ff66] rounded border border-white/10 transition-all text-xs cursor-pointer flex items-center space-x-1 font-mono font-bold"
+              aria-label="Pause Game"
+            >
+              <Pause className="w-3.5 h-3.5 text-[#00ff66]" />
+              <span className="text-[10px] tracking-wider uppercase">PAUSE</span>
             </button>
           </div>
 
@@ -181,12 +197,17 @@ export const PortfolioUI: React.FC<PortfolioUIProps> = ({
         </div>
       </div>
 
-      {/* On-Screen Mobile D-Pad Button Controls (Rendered ONLY in Mobile Landscape) */}
+      {/* On-Screen Mobile D-Pad Button Controls (Rendered ONLY in Mobile Landscape when active) */}
       {showMobileControls && mobileInputRef && (
         <MobileControls
           mobileInputRef={mobileInputRef}
-          isGameActive={state.hasStarted && !state.hasFinished && !state.hasCrashed}
+          isGameActive={state.hasStarted && !state.hasFinished && !state.hasCrashed && !state.isPaused}
         />
+      )}
+
+      {/* Cinematic Pause Overlay */}
+      {state.isPaused && (
+        <PauseModal onResume={onResumeGame} onRestart={onPlayAgain} />
       )}
 
       {/* Cinematic Section Intro Transition */}

@@ -58,47 +58,53 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   });
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 pointer-events-auto select-none font-mono">
-      {/* Minimal Translucent D-Pad Layout */}
-      <div className="flex flex-col items-center gap-1.5 p-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/15 shadow-2xl">
-        {/* UP BUTTON (ACCELERATE) */}
-        <button
-          {...bindPointerEvents('up')}
-          aria-label="Accelerate"
-          className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
-        >
-          <ChevronUp className="w-6 h-6" />
-        </button>
+    <>
+      {/* BOTTOM-LEFT: FORWARD (↑) & BACKWARD (↓) CONTROLS */}
+      <div className="fixed bottom-6 left-6 z-40 pointer-events-auto select-none font-mono">
+        <div className="flex flex-col items-center gap-2 p-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/15 shadow-2xl">
+          {/* UP BUTTON (ACCELERATE / FORWARD) */}
+          <button
+            {...bindPointerEvents('up')}
+            aria-label="Forward Accelerate"
+            className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
+          >
+            <ChevronUp className="w-7 h-7" />
+          </button>
 
-        {/* LEFT / RIGHT ROW */}
-        <div className="flex items-center gap-1.5">
+          {/* DOWN BUTTON (BACKWARD / BRAKE) */}
+          <button
+            {...bindPointerEvents('down')}
+            aria-label="Backward Brake"
+            className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
+          >
+            <ChevronDown className="w-7 h-7" />
+          </button>
+        </div>
+      </div>
+
+      {/* BOTTOM-RIGHT: STEER LEFT (←) & STEER RIGHT (→) CONTROLS */}
+      <div className="fixed bottom-6 right-6 z-40 pointer-events-auto select-none font-mono">
+        <div className="flex items-center gap-2 p-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/15 shadow-2xl">
+          {/* LEFT BUTTON (STEER LEFT) */}
           <button
             {...bindPointerEvents('left')}
             aria-label="Steer Left"
-            className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
+            className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-7 h-7" />
           </button>
 
+          {/* RIGHT BUTTON (STEER RIGHT) */}
           <button
             {...bindPointerEvents('right')}
             aria-label="Steer Right"
-            className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
+            className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-7 h-7" />
           </button>
         </div>
-
-        {/* DOWN BUTTON (BRAKE / REVERSE) */}
-        <button
-          {...bindPointerEvents('down')}
-          aria-label="Brake"
-          className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/15 active:bg-[#00ff66]/30 active:border-[#00ff66] border border-white/15 text-[#F5F5F5] active:text-[#00ff66] flex items-center justify-center transition-all touch-none cursor-pointer"
-        >
-          <ChevronDown className="w-6 h-6" />
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 

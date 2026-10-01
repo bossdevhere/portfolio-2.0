@@ -1,4 +1,4 @@
-import React, { Suspense, useRef } from 'react';
+import React, { Suspense, useRef, useEffect } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { useMobileOrientation } from './hooks/useMobileOrientation';
 import { World } from './scene/World';
@@ -20,6 +20,8 @@ export const App: React.FC = () => {
     closeModal,
     toggleAudio,
     setCameraMode,
+    togglePause,
+    resumeGame,
     playAgain,
   } = useGameState();
 
@@ -33,6 +35,29 @@ export const App: React.FC = () => {
     left: false,
     right: false,
   });
+
+  // ESC key listener for Desktop pause/resume
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Escape' && state.hasStarted && !state.hasFinished) {
+        togglePause();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.hasStarted, state.hasFinished, togglePause]);
+
+  // Clear all mobile inputs when orientation changes or pause/crash occurs
+  useEffect(() => {
+    if (isMobilePortrait || state.isPaused || state.hasCrashed || state.hasFinished) {
+      if (mobileInputRef.current) {
+        mobileInputRef.current.up = false;
+        mobileInputRef.current.down = false;
+        mobileInputRef.current.left = false;
+        mobileInputRef.current.right = false;
+      }
+    }
+  }, [isMobilePortrait, state.isPaused, state.hasCrashed, state.hasFinished]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#050505]">
@@ -82,6 +107,8 @@ export const App: React.FC = () => {
           onSetCameraMode={setCameraMode}
           onRestartTrack={playAgain}
           onPlayAgain={playAgain}
+          onTogglePause={togglePause}
+          onResumeGame={resumeGame}
           mobileInputRef={mobileInputRef}
           showMobileControls={showMobileControls}
         />

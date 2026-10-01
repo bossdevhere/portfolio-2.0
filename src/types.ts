@@ -80,6 +80,7 @@ export interface GameState {
   highScore: number;
   hasCrashed: boolean;
   hasFinished: boolean;
+  isPaused: boolean;
   leaderboard: ScoreEntry[];
   scorePopups: ScorePopup[];
 }
